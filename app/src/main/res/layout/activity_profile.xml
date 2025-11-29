@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/primary">
+
+    <!-- Header bleu foncé -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageButton
+            android:id="@+id/back_button"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_arrow_back_white"
+            app:tint="@color/white"
+            android:contentDescription="Retour"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="My Profile"
+            android:textColor="@color/white"
+            android:textSize="26sp"
+            android:fontFamily="@font/aleo_extrabold"
+            android:layout_marginStart="16dp"
+            app:layout_constraintTop_toTopOf="@id/back_button"
+            app:layout_constraintBottom_toBottomOf="@id/back_button"
+            app:layout_constraintStart_toEndOf="@id/back_button" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Conteneur blanc arrondi -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@drawable/rounded_container"
+        android:paddingHorizontal="28dp"
+        android:paddingTop="32dp"
+        android:paddingBottom="40dp"
+        app:layout_constraintTop_toBottomOf="@id/header"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <!-- === PHOTO DE PROFIL === -->
+        <FrameLayout
+            android:id="@+id/profile_image_container"
+            android:layout_width="130dp"
+            android:layout_height="130dp"
+            android:layout_marginTop="-65dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?android:attr/selectableItemBackgroundBorderless"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/profile_image"
+                android:layout_width="130dp"
+                android:layout_height="130dp"
+                android:src="@drawable/ic_profile_placeholder"
+                app:civ_border_width="4dp"
+                app:civ_border_color="@color/sec"
+                android:scaleType="centerCrop" />
+
+            <ImageButton
+                android:id="@+id/btn_add_photo"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/ripple_circle"
+                android:src="@drawable/ic_camera_add"
+                app:tint="@color/white"
+                android:scaleType="center"
+                android:visibility="gone"
+                android:contentDescription="Ajouter une photo" />
+
+            <ImageView
+                android:id="@+id/ic_add_indicator"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_add_circle"
+                app:tint="@color/sec"
+                android:layout_gravity="bottom|end"
+                android:visibility="gone"
+                android:layout_margin="6dp"/>
+        </FrameLayout>
+
+        <!-- Full Name -->
+        <TextView
+            android:id="@+id/tv_name_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Full Name"
+            android:textColor="@color/gray"
+            android:textSize="15sp"
+            android:fontFamily="@font/aleo_extrabold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/profile_image_container"
+            android:layout_marginTop="32dp"/>
+
+        <LinearLayout
+            android:id="@+id/name_container"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:orientation="horizontal"
+            android:background="@drawable/edittext_background"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="12dp"
+            app:layout_constraintTop_toBottomOf="@id/tv_name_label"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:id="@+id/name_text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Chargement..."
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-medium" />
+
+            <EditText
+                android:id="@+id/name_edit"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Chargement..."
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-medium"
+                android:background="@null"
+                android:visibility="gone"
+                android:inputType="textPersonName"
+                android:imeOptions="actionDone" />
+
+            <ImageButton
+                android:id="@+id/name_edit_button"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_edit_pencil"
+                app:tint="@color/gray"
+                android:contentDescription="Modifier le nom" />
+        </LinearLayout>
+
+        <!-- Email -->
+        <TextView
+            android:id="@+id/tv_email_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Email"
+            android:textColor="@color/gray"
+            android:textSize="15sp"
+            android:fontFamily="@font/aleo_extrabold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/name_container"
+            android:layout_marginTop="24dp"/>
+
+        <LinearLayout
+            android:id="@+id/email_container"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:orientation="horizontal"
+            android:background="@drawable/edittext_background"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="12dp"
+            app:layout_constraintTop_toBottomOf="@id/tv_email_label"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:id="@+id/email_text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="email@example.com"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-medium" />
+
+            <EditText
+                android:id="@+id/email_edit"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="email@example.com"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-medium"
+                android:background="@null"
+                android:visibility="gone"
+                android:inputType="textEmailAddress"
+                android:imeOptions="actionDone" />
+
+            <ImageButton
+                android:id="@+id/email_edit_button"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_edit_pencil"
+                app:tint="@color/gray"
+                android:contentDescription="Modifier l'email" />
+        </LinearLayout>
+
+        <!-- Phone -->
+        <TextView
+            android:id="@+id/tv_phone_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Phone Number"
+            android:textColor="@color/gray"
+            android:textSize="15sp"
+            android:fontFamily="@font/aleo_extrabold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/email_container"
+            android:layout_marginTop="24dp"/>
+
+        <LinearLayout
+            android:id="@+id/phone_container"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:orientation="horizontal"
+            android:background="@drawable/edittext_background"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="12dp"
+            app:layout_constraintTop_toBottomOf="@id/tv_phone_label"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:id="@+id/phone_text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="+216 00 000 000"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-medium" />
+
+            <EditText
+                android:id="@+id/phone_edit"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="+216 00 000 000"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-medium"
+                android:background="@null"
+                android:visibility="gone"
+                android:inputType="phone"
+                android:maxLength="15"
+                android:imeOptions="actionDone" />
+
+            <ImageButton
+                android:id="@+id/phone_edit_button"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_edit_pencil"
+                app:tint="@color/gray"
+                android:contentDescription="Modifier le téléphone" />
+        </LinearLayout>
+        <TextView
+            android:id="@+id/tv_password_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Password"
+            android:textColor="@color/gray"
+            android:textSize="15sp"
+            android:fontFamily="@font/aleo_extrabold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/phone_container"
+            android:layout_marginTop="24dp"/>
+
+        <LinearLayout
+            android:id="@+id/password_container"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:orientation="horizontal"
+            android:background="@drawable/edittext_background"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="12dp"
+            app:layout_constraintTop_toBottomOf="@id/tv_password_label"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:id="@+id/password_text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="********"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-medium" />
+
+            <ImageButton
+                android:id="@+id/password_edit_button"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_edit_pencil"
+                app:tint="@color/gray"
+                android:contentDescription="Modifier mot de passe" />
+        </LinearLayout>
+
+
+        <!-- Bouton logout -->
+        <ImageButton
+            android:id="@+id/logout_button"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:background="@drawable/btn_logout_circle"
+            android:src="@drawable/ic_arrow_forward_white"
+            android:scaleType="centerInside"
+            android:contentDescription="Déconnexion"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="28dp"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
