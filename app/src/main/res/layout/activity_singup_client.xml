@@ -92,7 +92,7 @@
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="800dp">
+                android:minHeight="900dp">
 
                 <TextView
                     android:id="@+id/signupText"
@@ -107,6 +107,68 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
+                <!-- Photo Upload -->
+                <TextView
+                    android:id="@+id/photoLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:text="Profile Photo (Optional)"
+                    android:textColor="@color/gray"
+                    android:textSize="15sp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/signupText" />
+                    
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/photoPreview"
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:layout_marginTop="12dp"
+                    android:src="@drawable/ic_profile_placeholder"
+                    android:scaleType="centerCrop"
+                    android:visibility="gone"
+                    android:contentDescription="Selected photo preview"
+                    app:civ_border_width="2dp"
+                    app:civ_border_color="@color/sec"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/photoLabel" />
+                    
+                <Button
+                    android:id="@+id/selectPhotoButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:backgroundTint="@color/gray"
+                    android:text="📷 Select Photo"
+                    android:textColor="@color/white"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/photoPreview" />
+                    
+                <TextView
+                    android:id="@+id/photoStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="No photo selected"
+                    android:textColor="@color/gray"
+                    android:textSize="12sp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/selectPhotoButton" />
+                    
+                <TextView
+                    android:id="@+id/photo_error"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="#D32F2F"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/photoStatus" />
+
                 <!-- Name -->
                 <TextView
                     android:id="@+id/nameLabel"
@@ -117,7 +179,7 @@
                     android:textColor="@color/gray"
                     android:textSize="15sp"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/signupText" />
+                    app:layout_constraintTop_toBottomOf="@id/photo_error" />
 
                 <EditText
                     android:id="@+id/name"
@@ -216,6 +278,55 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/phone" />
 
+                <!-- Location (for mechanics only) -->
+                <TextView
+                    android:id="@+id/locationLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:text="Location"
+                    android:textColor="@color/gray"
+                    android:textSize="15sp"
+                    android:visibility="gone"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/phone_error" />
+                    
+                <Button
+                    android:id="@+id/getLocationButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:backgroundTint="@color/sec"
+                    android:text="📍 Get My Location"
+                    android:textColor="@color/white"
+                    android:visibility="gone"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/locationLabel" />
+
+                <TextView
+                    android:id="@+id/locationStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="No location captured"
+                    android:textColor="@color/gray"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/getLocationButton" />
+                    
+                <TextView
+                    android:id="@+id/location_error"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="#D32F2F"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/locationStatus" />
+
                 <!-- Password -->
                 <TextView
                     android:id="@+id/passwordLabel"
@@ -226,7 +337,7 @@
                     android:textColor="@color/gray"
                     android:textSize="15sp"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/phone_error" />
+                    app:layout_constraintTop_toBottomOf="@id/location_error" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/password_layout"

@@ -20,6 +20,8 @@ import androidx.activity.EdgeToEdge;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class MainActivity2 extends AppCompatActivity {
 
@@ -33,6 +35,7 @@ public class MainActivity2 extends AppCompatActivity {
 
     // Firebase
     private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +45,7 @@ public class MainActivity2 extends AppCompatActivity {
 
         // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         // ---- Bind views ----------------------------------------------------
         container   = findViewById(R.id.container);
@@ -88,6 +92,7 @@ public class MainActivity2 extends AppCompatActivity {
             }
         });
 
+
         // Login button
         btnLogin.setOnClickListener(v -> {
             boolean emailOk = validateEmail();
@@ -101,10 +106,8 @@ public class MainActivity2 extends AppCompatActivity {
                 mAuth.signInWithEmailAndPassword(email, password)
                         .addOnCompleteListener(task -> {
                             if (task.isSuccessful()) {
-                                // Login success, go to HomeActivity
-                                Intent intent = new Intent(MainActivity2.this, home.class);
-                                startActivity(intent);
-                                finish();
+                                // Login success, check if user is enabled
+                                checkUserEnabled(mAuth.getCurrentUser().getUid());
                             } else {
                                 // Login failed, show error
                                 tvPasswordError.setText("Email or password is incorrect");
@@ -116,7 +119,22 @@ public class MainActivity2 extends AppCompatActivity {
 
         // ---- Navigate to Sign-up ------------------------------------------
         createAccount.setOnClickListener(v -> {
-            startActivity(new Intent(MainActivity2.this, SingupClientActivity.class));
+            // Show dialog to choose user type
+            new android.app.AlertDialog.Builder(this)
+                    .setTitle("Choose Account Type")
+                    .setMessage("Please select the type of account you want to create:")
+                    .setPositiveButton("Client", (dialog, which) -> {
+                        Intent intent = new Intent(MainActivity2.this, SingupClientActivity.class);
+                        intent.putExtra("USER_TYPE", "client");
+                        startActivity(intent);
+                    })
+                    .setNegativeButton("Mechanic", (dialog, which) -> {
+                        Intent intent = new Intent(MainActivity2.this, SingupClientActivity.class);
+                        intent.putExtra("USER_TYPE", "mechanic");
+                        startActivity(intent);
+                    })
+                    .setNeutralButton("Cancel", null)
+                    .show();
         });
     }
     private boolean validateEmail() {
@@ -151,6 +169,58 @@ public class MainActivity2 extends AppCompatActivity {
             tvPasswordError.setVisibility(TextView.GONE);
             return true;
         }
+    }
+
+
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser != null) {
+            checkUserEnabled(currentUser.getUid());
+        }
+    }
+    
+    private void checkUserEnabled(String userId) {
+        db.collection("users").document(userId).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        Boolean enabled = documentSnapshot.getBoolean("enabled");
+                        if (enabled != null && enabled) {
+                            // User is enabled
+                            String role = documentSnapshot.getString("role");
+                            // Debug: Show role
+                            Toast.makeText(MainActivity2.this, "Role: " + role, Toast.LENGTH_SHORT).show();
+                            
+                            if (role != null && role.trim().equalsIgnoreCase("admin")) {
+                                // Redirect to Admin Dashboard
+                                startActivity(new Intent(MainActivity2.this, AdminDashboardActivity.class));
+                            } else {
+                                // Redirect to Home
+                                startActivity(new Intent(MainActivity2.this, home.class));
+                            }
+                            finish();
+                        } else {
+                            // User is disabled (e.g. mechanic pending approval)
+                            mAuth.signOut();
+                            new android.app.AlertDialog.Builder(MainActivity2.this)
+                                .setTitle("Account Pending")
+                                .setMessage("Your request has been sent to the admin. We will inform you by email when your request is accepted. Thank you!")
+                                .setCancelable(false)
+                                .setPositiveButton("OK", null)
+                                .show();
+                        }
+                    } else {
+                        // User document not found? Should not happen usually
+                        mAuth.signOut();
+                        Toast.makeText(MainActivity2.this, "User data not found", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    mAuth.signOut();
+                    Toast.makeText(MainActivity2.this, "Error checking user status: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
 
