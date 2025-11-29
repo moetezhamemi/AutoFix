@@ -52,23 +52,23 @@ public class SingupClientActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private EditText etPhone;
     private TextView tvPhoneError;
-    
+
     // Location fields (for mechanics)
     private Button btnGetLocation;
     private TextView tvLocationLabel, tvLocationError, tvLocationStatus;
     private GeoPoint capturedLocation = null;
     private FusedLocationProviderClient fusedLocationClient;
-    
+
     // Photo upload
     private Button btnSelectPhoto;
     private TextView tvPhotoStatus, tvPhotoLabel, tvPhotoError;
     private CircleImageView ivPhotoPreview;
     private Uri selectedPhotoUri = null;
     private ActivityResultLauncher<String> imagePickerLauncher;
-    
+
     // User type
     private String userType = "client"; // default to client
-    
+
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
 
     @Override
@@ -76,7 +76,7 @@ public class SingupClientActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_singup_client);
-        
+
         // Get user type from intent (default to "client")
         userType = getIntent().getStringExtra("USER_TYPE");
         if (userType == null || userType.isEmpty()) {
@@ -104,25 +104,25 @@ public class SingupClientActivity extends AppCompatActivity {
         auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        
-        //phone
+
+        // phone
         etPhone = findViewById(R.id.phone);
         tvPhoneError = findViewById(R.id.phone_error);
-        
+
         // Photo upload
         btnSelectPhoto = findViewById(R.id.selectPhotoButton);
         tvPhotoStatus = findViewById(R.id.photoStatus);
         tvPhotoLabel = findViewById(R.id.photoLabel);
         tvPhotoError = findViewById(R.id.photo_error);
         ivPhotoPreview = findViewById(R.id.photoPreview);
-        
+
         // Update photo label based on user type
         if (userType.equalsIgnoreCase("mechanic")) {
             tvPhotoLabel.setText("Profile Photo (Required)");
         } else {
             tvPhotoLabel.setText("Profile Photo (Optional)");
         }
-        
+
         // Initialize image picker
         imagePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.GetContent(),
@@ -136,24 +136,18 @@ public class SingupClientActivity extends AppCompatActivity {
                         tvPhotoError.setVisibility(View.GONE);
                     }
                 });
-        
+
         // Location fields (for mechanics)
         btnGetLocation = findViewById(R.id.getLocationButton);
         tvLocationLabel = findViewById(R.id.locationLabel);
         tvLocationError = findViewById(R.id.location_error);
         tvLocationStatus = findViewById(R.id.locationStatus);
-        
-        // Show/hide location field based on user type
-        if (userType.equalsIgnoreCase("mechanic")) {
-            tvLocationLabel.setVisibility(View.VISIBLE);
-            btnGetLocation.setVisibility(View.VISIBLE);
-            tvLocationStatus.setVisibility(View.VISIBLE);
-        } else {
-            tvLocationLabel.setVisibility(View.GONE);
-            btnGetLocation.setVisibility(View.GONE);
-            tvLocationError.setVisibility(View.GONE);
-            tvLocationStatus.setVisibility(View.GONE);
-        }
+
+        // Location fields are no longer used for mechanics during signup
+        tvLocationLabel.setVisibility(View.GONE);
+        btnGetLocation.setVisibility(View.GONE);
+        tvLocationError.setVisibility(View.GONE);
+        tvLocationStatus.setVisibility(View.GONE);
 
         // Animation
         container.getViewTreeObserver().addOnGlobalLayoutListener(
@@ -171,29 +165,41 @@ public class SingupClientActivity extends AppCompatActivity {
 
         // Validation listeners
         etName.addTextChangedListener(new SimpleTextWatcher() {
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { validateName(); }
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                validateName();
+            }
         });
         etEmail.addTextChangedListener(new SimpleTextWatcher() {
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { validateEmail(); }
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                validateEmail();
+            }
         });
         etPassword.addTextChangedListener(new SimpleTextWatcher() {
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
                 validatePassword();
                 validateConfirm();
             }
         });
         etPhone.addTextChangedListener(new SimpleTextWatcher() {
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) { validatePhone(); }
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                validatePhone();
+            }
         });
 
         etConfirmPassword.addTextChangedListener(new SimpleTextWatcher() {
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { validateConfirm(); }
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                validateConfirm();
+            }
         });
-        
+
         // Photo selection button
         btnSelectPhoto.setOnClickListener(v -> imagePickerLauncher.launch("image/*"));
-        
+
         // Location button (for mechanics)
         if (userType.equalsIgnoreCase("mechanic")) {
             btnGetLocation.setOnClickListener(v -> requestLocationPermissionAndCapture());
@@ -212,20 +218,18 @@ public class SingupClientActivity extends AppCompatActivity {
         boolean passwordOk = validatePassword();
         boolean confirmOk = validateConfirm();
         boolean phoneOk = validatePhone();
-        
+
         // Validate photo for mechanics
         boolean photoOk = true;
         if (userType.equalsIgnoreCase("mechanic")) {
             photoOk = validatePhoto();
         }
-        
-        // Validate location only for mechanics
-        boolean locationOk = true;
-        if (userType.equalsIgnoreCase("mechanic")) {
-            locationOk = validateLocation();
-        }
 
-        if (!(nameOk && emailOk && passwordOk && confirmOk && phoneOk && photoOk && locationOk)) return;
+        // Location validation removed for mechanics
+        boolean locationOk = true;
+
+        if (!(nameOk && emailOk && passwordOk && confirmOk && phoneOk && photoOk && locationOk))
+            return;
 
         String name = etName.getText().toString().trim();
         String email = etEmail.getText().toString().trim();
@@ -241,12 +245,12 @@ public class SingupClientActivity extends AppCompatActivity {
 
                     if (task.isSuccessful()) {
                         String userId = auth.getCurrentUser().getUid();
-                        
+
                         // Use captured location for mechanics, default for clients
-                        GeoPoint geoPoint = (userType.equalsIgnoreCase("mechanic") && capturedLocation != null) 
-                                ? capturedLocation 
+                        GeoPoint geoPoint = (userType.equalsIgnoreCase("mechanic") && capturedLocation != null)
+                                ? capturedLocation
                                 : new GeoPoint(0, 0);
-                        
+
                         // Create user with correct role
                         User user = new User(userId, name, email, geoPoint, "", phone, userType);
 
@@ -258,27 +262,16 @@ public class SingupClientActivity extends AppCompatActivity {
                                         uploadPhotoToCloudinary(userId);
                                     } else {
                                         // No photo, show appropriate message based on user type
-                                        if (userType.equalsIgnoreCase("mechanic")) {
-                                            // Mechanic needs approval
-                                            new android.app.AlertDialog.Builder(SingupClientActivity.this)
-                                                .setTitle("Request Sent")
-                                                .setMessage("Your request has been sent to the admin. We will inform you by email when your request is accepted. Thank you!")
-                                                .setCancelable(false)
-                                                .setPositiveButton("OK", (dialog, which) -> {
-                                                    startActivity(new Intent(SingupClientActivity.this, MainActivity2.class));
-                                                    finish();
-                                                })
-                                                .show();
-                                        } else {
-                                            // Client can login immediately
-                                            Toast.makeText(SingupClientActivity.this, "Account created successfully!", Toast.LENGTH_SHORT).show();
-                                            startActivity(new Intent(SingupClientActivity.this, MainActivity2.class));
-                                            finish();
-                                        }
+                                        // Both Client and Mechanic can login immediately
+                                        Toast.makeText(SingupClientActivity.this, "Account created successfully!",
+                                                Toast.LENGTH_SHORT).show();
+                                        startActivity(new Intent(SingupClientActivity.this, MainActivity2.class));
+                                        finish();
                                     }
                                 })
                                 .addOnFailureListener(e -> {
-                                    Toast.makeText(SingupClientActivity.this, "Error saving data", Toast.LENGTH_LONG).show();
+                                    Toast.makeText(SingupClientActivity.this, "Error saving data", Toast.LENGTH_LONG)
+                                            .show();
                                     finish();
                                 });
 
@@ -294,76 +287,110 @@ public class SingupClientActivity extends AppCompatActivity {
                 });
     }
 
-
     // Validation helpers
     private boolean validateName() {
         String name = etName.getText().toString().trim();
-        if (name.isEmpty()) { tvNameError.setText("Name is required"); tvNameError.setVisibility(TextView.VISIBLE); return false; }
+        if (name.isEmpty()) {
+            tvNameError.setText("Name is required");
+            tvNameError.setVisibility(TextView.VISIBLE);
+            return false;
+        }
         tvNameError.setVisibility(TextView.GONE);
         return true;
     }
+
     private boolean validatePhone() {
         String phone = etPhone.getText().toString().trim();
-        if (phone.isEmpty()) { tvPhoneError.setText("Phone is required"); tvPhoneError.setVisibility(TextView.VISIBLE); return false; }
-        else if (!android.util.Patterns.PHONE.matcher(phone).matches()) { tvPhoneError.setText("Enter valid phone"); tvPhoneError.setVisibility(TextView.VISIBLE); return false; }
+        if (phone.isEmpty()) {
+            tvPhoneError.setText("Phone is required");
+            tvPhoneError.setVisibility(TextView.VISIBLE);
+            return false;
+        } else if (!android.util.Patterns.PHONE.matcher(phone).matches()) {
+            tvPhoneError.setText("Enter valid phone");
+            tvPhoneError.setVisibility(TextView.VISIBLE);
+            return false;
+        }
         tvPhoneError.setVisibility(TextView.GONE);
         return true;
     }
 
     private boolean validateEmail() {
         String email = etEmail.getText().toString().trim();
-        if (email.isEmpty()) { tvEmailError.setText("Email is required"); tvEmailError.setVisibility(TextView.VISIBLE); return false; }
-        else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) { tvEmailError.setText("Enter valid email"); tvEmailError.setVisibility(TextView.VISIBLE); return false; }
+        if (email.isEmpty()) {
+            tvEmailError.setText("Email is required");
+            tvEmailError.setVisibility(TextView.VISIBLE);
+            return false;
+        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            tvEmailError.setText("Enter valid email");
+            tvEmailError.setVisibility(TextView.VISIBLE);
+            return false;
+        }
         tvEmailError.setVisibility(TextView.GONE);
         return true;
     }
+
     private boolean validatePassword() {
         String pwd = etPassword.getText().toString();
-        if (pwd.isEmpty()) { tvPasswordError.setText("Password required"); tvPasswordError.setVisibility(TextView.VISIBLE); return false; }
-        else if (pwd.length() < 6) { tvPasswordError.setText("At least 6 characters"); tvPasswordError.setVisibility(TextView.VISIBLE); return false; }
+        if (pwd.isEmpty()) {
+            tvPasswordError.setText("Password required");
+            tvPasswordError.setVisibility(TextView.VISIBLE);
+            return false;
+        } else if (pwd.length() < 6) {
+            tvPasswordError.setText("At least 6 characters");
+            tvPasswordError.setVisibility(TextView.VISIBLE);
+            return false;
+        }
         tvPasswordError.setVisibility(TextView.GONE);
         return true;
     }
+
     private boolean validateConfirm() {
         String pwd = etPassword.getText().toString();
         String confirm = etConfirmPassword.getText().toString();
-        if (confirm.isEmpty()) { tvConfirmError.setText("Confirm required"); tvConfirmError.setVisibility(TextView.VISIBLE); return false; }
-        else if (!confirm.equals(pwd)) { tvConfirmError.setText("Passwords do not match"); tvConfirmError.setVisibility(TextView.VISIBLE); return false; }
+        if (confirm.isEmpty()) {
+            tvConfirmError.setText("Confirm required");
+            tvConfirmError.setVisibility(TextView.VISIBLE);
+            return false;
+        } else if (!confirm.equals(pwd)) {
+            tvConfirmError.setText("Passwords do not match");
+            tvConfirmError.setVisibility(TextView.VISIBLE);
+            return false;
+        }
         tvConfirmError.setVisibility(TextView.GONE);
         return true;
     }
-    
+
     private boolean validateLocation() {
-        if (capturedLocation == null) { 
-            tvLocationError.setText("Please capture your location"); 
-            tvLocationError.setVisibility(TextView.VISIBLE); 
-            return false; 
+        if (capturedLocation == null) {
+            tvLocationError.setText("Please capture your location");
+            tvLocationError.setVisibility(TextView.VISIBLE);
+            return false;
         }
         tvLocationError.setVisibility(TextView.GONE);
         return true;
     }
-    
+
     private boolean validatePhoto() {
-        if (selectedPhotoUri == null) { 
-            tvPhotoError.setText("Photo is required for mechanics"); 
-            tvPhotoError.setVisibility(TextView.VISIBLE); 
-            return false; 
+        if (selectedPhotoUri == null) {
+            tvPhotoError.setText("Photo is required for mechanics");
+            tvPhotoError.setVisibility(TextView.VISIBLE);
+            return false;
         }
         tvPhotoError.setVisibility(TextView.GONE);
         return true;
     }
-    
+
     private void requestLocationPermissionAndCapture() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             captureLocation();
         } else {
             ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    new String[] { Manifest.permission.ACCESS_FINE_LOCATION },
                     LOCATION_PERMISSION_REQUEST_CODE);
         }
     }
-    
+
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -375,21 +402,21 @@ public class SingupClientActivity extends AppCompatActivity {
             }
         }
     }
-    
+
     private void captureLocation() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) 
-                != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
-        
+
         tvLocationStatus.setText("Getting location...");
         tvLocationStatus.setTextColor(getResources().getColor(android.R.color.holo_orange_dark));
-        
+
         fusedLocationClient.getLastLocation()
                 .addOnSuccessListener(this, location -> {
                     if (location != null) {
                         capturedLocation = new GeoPoint(location.getLatitude(), location.getLongitude());
-                        tvLocationStatus.setText("✓ Location captured: " + 
+                        tvLocationStatus.setText("✓ Location captured: " +
                                 String.format("%.4f, %.4f", location.getLatitude(), location.getLongitude()));
                         tvLocationStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
                         tvLocationError.setVisibility(View.GONE);
@@ -404,12 +431,13 @@ public class SingupClientActivity extends AppCompatActivity {
                     Toast.makeText(this, "Failed to get location: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
-    
+
     private void uploadPhotoToCloudinary(String userId) {
-        if (selectedPhotoUri == null) return;
-        
+        if (selectedPhotoUri == null)
+            return;
+
         Toast.makeText(this, "Uploading photo...", Toast.LENGTH_SHORT).show();
-        
+
         CloudinaryHelper.uploadImage(this, selectedPhotoUri, new CloudinaryHelper.CloudinaryUploadCallback() {
             @Override
             public void onUploadStart() {
@@ -427,25 +455,15 @@ public class SingupClientActivity extends AppCompatActivity {
                 db.collection("users").document(userId)
                         .update("photoUrl", imageUrl)
                         .addOnSuccessListener(aVoid -> {
-                            if (userType.equalsIgnoreCase("mechanic")) {
-                                // Show dialog for mechanic approval
-                                new android.app.AlertDialog.Builder(SingupClientActivity.this)
-                                    .setTitle("Request Sent")
-                                    .setMessage("Your request has been sent to the admin. We will inform you by email when your request is accepted. Thank you!")
-                                    .setCancelable(false)
-                                    .setPositiveButton("OK", (dialog, which) -> {
-                                        startActivity(new Intent(SingupClientActivity.this, MainActivity2.class));
-                                        finish();
-                                    })
-                                    .show();
-                            } else {
-                                Toast.makeText(SingupClientActivity.this, "Account created successfully!", Toast.LENGTH_SHORT).show();
-                                startActivity(new Intent(SingupClientActivity.this, MainActivity2.class));
-                                finish();
-                            }
+                            // Both Client and Mechanic can login immediately
+                            Toast.makeText(SingupClientActivity.this, "Account created successfully!",
+                                    Toast.LENGTH_SHORT).show();
+                            startActivity(new Intent(SingupClientActivity.this, MainActivity2.class));
+                            finish();
                         })
                         .addOnFailureListener(e -> {
-                            Toast.makeText(SingupClientActivity.this, "Photo uploaded but failed to save URL", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(SingupClientActivity.this, "Photo uploaded but failed to save URL",
+                                    Toast.LENGTH_SHORT).show();
                             startActivity(new Intent(SingupClientActivity.this, MainActivity2.class));
                             finish();
                         });
@@ -462,7 +480,12 @@ public class SingupClientActivity extends AppCompatActivity {
     }
 
     private abstract class SimpleTextWatcher implements TextWatcher {
-        @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-        @Override public void afterTextChanged(Editable s) {}
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+        }
     }
 }

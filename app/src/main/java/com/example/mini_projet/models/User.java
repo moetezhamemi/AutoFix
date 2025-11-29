@@ -25,8 +25,8 @@ public class User {
         this.photoUrl = photoUrl;
         this.phone = phone;
         this.role = role;
-        // Set enabled automatically
-        this.enabled = role.equalsIgnoreCase("client");
+        // Set enabled automatically (clients and mechanics are enabled by default)
+        this.enabled = role.equalsIgnoreCase("client") || role.equalsIgnoreCase("mechanic");
     }
 
     // Getters and Setters

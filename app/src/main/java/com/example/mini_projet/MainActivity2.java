@@ -48,14 +48,14 @@ public class MainActivity2 extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
 
         // ---- Bind views ----------------------------------------------------
-        container   = findViewById(R.id.container);
-        scrollView  = findViewById(R.id.scroll_view);
+        container = findViewById(R.id.container);
+        scrollView = findViewById(R.id.scroll_view);
 
-        etEmail     = findViewById(R.id.email);
-        etPassword  = findViewById(R.id.password);
-        tvEmailError    = findViewById(R.id.email_error);
+        etEmail = findViewById(R.id.email);
+        etPassword = findViewById(R.id.password);
+        tvEmailError = findViewById(R.id.email_error);
         tvPasswordError = findViewById(R.id.password_error);
-        btnLogin    = findViewById(R.id.loginButton);
+        btnLogin = findViewById(R.id.loginButton);
         createAccount = findViewById(R.id.textView10);
 
         container.getViewTreeObserver().addOnGlobalLayoutListener(
@@ -81,17 +81,18 @@ public class MainActivity2 extends AppCompatActivity {
 
         // Text Watchers for live validation
         etEmail.addTextChangedListener(new SimpleTextWatcher() {
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
                 validateEmail();
             }
         });
 
         etPassword.addTextChangedListener(new SimpleTextWatcher() {
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
                 validatePassword();
             }
         });
-
 
         // Login button
         btnLogin.setOnClickListener(v -> {
@@ -137,6 +138,7 @@ public class MainActivity2 extends AppCompatActivity {
                     .show();
         });
     }
+
     private boolean validateEmail() {
         String email = etEmail.getText().toString().trim();
 
@@ -171,8 +173,6 @@ public class MainActivity2 extends AppCompatActivity {
         }
     }
 
-
-
     @Override
     protected void onStart() {
         super.onStart();
@@ -181,7 +181,7 @@ public class MainActivity2 extends AppCompatActivity {
             checkUserEnabled(currentUser.getUid());
         }
     }
-    
+
     private void checkUserEnabled(String userId) {
         db.collection("users").document(userId).get()
                 .addOnSuccessListener(documentSnapshot -> {
@@ -192,7 +192,7 @@ public class MainActivity2 extends AppCompatActivity {
                             String role = documentSnapshot.getString("role");
                             // Debug: Show role
                             Toast.makeText(MainActivity2.this, "Role: " + role, Toast.LENGTH_SHORT).show();
-                            
+
                             if (role != null && role.trim().equalsIgnoreCase("admin")) {
                                 // Redirect to Admin Dashboard
                                 startActivity(new Intent(MainActivity2.this, AdminDashboardActivity.class));
@@ -205,11 +205,12 @@ public class MainActivity2 extends AppCompatActivity {
                             // User is disabled (e.g. mechanic pending approval)
                             mAuth.signOut();
                             new android.app.AlertDialog.Builder(MainActivity2.this)
-                                .setTitle("Account Pending")
-                                .setMessage("Your request has been sent to the admin. We will inform you by email when your request is accepted. Thank you!")
-                                .setCancelable(false)
-                                .setPositiveButton("OK", null)
-                                .show();
+                                    .setTitle("Account Pending")
+                                    .setMessage(
+                                            "Your request has been sent to the admin. We will inform you by email when your request is accepted. Thank you!")
+                                    .setCancelable(false)
+                                    .setPositiveButton("OK", null)
+                                    .show();
                         }
                     } else {
                         // User document not found? Should not happen usually
@@ -219,13 +220,18 @@ public class MainActivity2 extends AppCompatActivity {
                 })
                 .addOnFailureListener(e -> {
                     mAuth.signOut();
-                    Toast.makeText(MainActivity2.this, "Error checking user status: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity2.this, "Error checking user status: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
                 });
     }
 
-
     private abstract class SimpleTextWatcher implements TextWatcher {
-        @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-        @Override public void afterTextChanged(Editable s) {}
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+        }
     }
 }
