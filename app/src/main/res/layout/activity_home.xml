@@ -13,36 +13,61 @@
         android:layout_height="wrap_content"
         android:background="@android:color/white"
         android:padding="16dp"
+        android:layout_marginTop="24dp"
         app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:id="@+id/location_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:fontFamily="@font/aleo_extrabold"
-            android:text="Tunisie, Nabeul"
-            android:textColor="@color/gray"
-            android:textSize="18sp"
+        <!-- Icône de localisation -->
+        <ImageView
+            android:id="@+id/location_icon"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:src="@drawable/ic_location"
+            android:padding="12dp"
+            android:background="@drawable/edittext_background"
+            app:tint="@color/black"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
 
-        <ImageView
-            android:id="@+id/down_arrow"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@android:drawable/arrow_down_float"
-            app:layout_constraintStart_toEndOf="@id/location_text"
-            app:layout_constraintTop_toTopOf="@id/location_text"
-            app:layout_constraintBottom_toBottomOf="@id/location_text"/>
+        <!-- Container pour les textes -->
+        <LinearLayout
+            android:id="@+id/location_text_container"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@id/location_icon"
+            app:layout_constraintTop_toTopOf="parent">
 
-        <ImageButton
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif"
+                android:text="your Location"
+                android:textColor="@color/gray"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/location_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="@font/aleo_extrabold"
+                android:text="Tunisie, Nabeul"
+                android:textColor="@color/black"
+                android:textSize="18sp" />
+        </LinearLayout>
+
+        <de.hdodenhof.circleimageview.CircleImageView
             android:id="@+id/profile_icon"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/logo"
-            android:background="@null"
+            android:src="@drawable/ic_profile_placeholder"
+            android:clickable="true"
+            android:focusable="true"
+            app:civ_border_width="1dp"
+            app:civ_border_color="@color/gray"
             android:contentDescription="Profile Button"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -73,9 +98,12 @@
         android:id="@+id/map"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/search_bar"
+        android:layout_marginTop="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintTop_toBottomOf="@id/search_bar"
+        app:layout_constraintVertical_bias="0.0" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

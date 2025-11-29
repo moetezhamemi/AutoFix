@@ -8,13 +8,24 @@ import android.location.Geocoder;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.widget.EditText;
-import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.view.inputmethod.EditorInfo;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import de.hdodenhof.circleimageview.CircleImageView;
+import com.example.mini_projet.models.User;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.squareup.picasso.Picasso;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
+import com.google.android.gms.tasks.CancellationTokenSource;
 
 import org.osmdroid.config.Configuration;
 import org.osmdroid.events.MapEventsReceiver;
@@ -33,8 +44,14 @@ import java.util.Map;
 public class home extends AppCompatActivity {
     private MapView map;
     private EditText searchBar;
+    private CircleImageView profileIcon;
+    private TextView locationText;
     private final Map<String, GeoPoint> cityMap = new HashMap<>();
     private static final int LOCATION_REQUEST = 1;
+
+    private FirebaseAuth auth;
+    private FirebaseFirestore db;
+    private FusedLocationProviderClient fusedLocationClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,13 +65,21 @@ public class home extends AppCompatActivity {
 
         map = findViewById(R.id.map);
         searchBar = findViewById(R.id.search_bar);
+        profileIcon = findViewById(R.id.profile_icon);
+        locationText = findViewById(R.id.location_text);
+
+        auth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         initMap();
         initCityList();
         requestLocationPermission();
         setupSearch();
-        ImageButton profileButton = findViewById(R.id.profile_icon);
-        profileButton.setOnClickListener(v -> {
+        loadUserProfile();
+        getUserLocation();
+
+        profileIcon.setOnClickListener(v -> {
             Intent intent = new Intent(home.this, profile.class);
             startActivity(intent);
         });
@@ -67,8 +92,15 @@ public class home extends AppCompatActivity {
         map.getController().setCenter(new GeoPoint(34.0, 9.0));
 
         map.getOverlays().add(new MapEventsOverlay(new MapEventsReceiver() {
-            @Override public boolean singleTapConfirmedHelper(GeoPoint p) { return false; }
-            @Override public boolean longPressHelper(GeoPoint p) { return false; }
+            @Override
+            public boolean singleTapConfirmedHelper(GeoPoint p) {
+                return false;
+            }
+
+            @Override
+            public boolean longPressHelper(GeoPoint p) {
+                return false;
+            }
         }));
     }
 
@@ -96,19 +128,71 @@ public class home extends AppCompatActivity {
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    new String[] { Manifest.permission.ACCESS_FINE_LOCATION },
                     LOCATION_REQUEST);
         }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+            @NonNull String[] permissions,
+            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == LOCATION_REQUEST && grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            // permission granted – you can enable my-location overlay here if you want
+            // Permission accordée, récupérer la localisation
+            getUserLocation();
+        }
+    }
+
+    private void getUserLocation() {
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+
+        try {
+            fusedLocationClient
+                    .getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, new CancellationTokenSource().getToken())
+                    .addOnSuccessListener(this, location -> {
+                        if (location != null) {
+                            // Récupérer le nom de la ville via Geocoder
+                            Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+                            try {
+                                List<Address> addresses = geocoder.getFromLocation(
+                                        location.getLatitude(),
+                                        location.getLongitude(),
+                                        1);
+                                if (addresses != null && !addresses.isEmpty()) {
+                                    Address address = addresses.get(0);
+                                    String city = address.getLocality();
+                                    String country = address.getCountryName();
+
+                                    if (city != null && country != null) {
+                                        locationText.setText(country + ", " + city);
+                                    } else if (city != null) {
+                                        locationText.setText(city);
+                                    } else if (country != null) {
+                                        locationText.setText(country);
+                                    }
+
+                                    // Centrer la carte sur la position actuelle
+                                    GeoPoint userLocation = new GeoPoint(location.getLatitude(),
+                                            location.getLongitude());
+                                    map.getController().setCenter(userLocation);
+                                    map.getController().setZoom(12.0);
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                Toast.makeText(this, "Impossible de récupérer l'adresse", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Impossible de récupérer la localisation", Toast.LENGTH_SHORT).show();
+                    });
+        } catch (SecurityException e) {
+            e.printStackTrace();
         }
     }
 
@@ -140,7 +224,8 @@ public class home extends AppCompatActivity {
                 zoomTo(gp, query);
                 return;
             }
-        } catch (IOException ignored) {}
+        } catch (IOException ignored) {
+        }
 
         Toast.makeText(this, "Not found – try \"Tunis\" or \"Sousse\"", Toast.LENGTH_SHORT).show();
     }
@@ -157,6 +242,39 @@ public class home extends AppCompatActivity {
         map.invalidate();
     }
 
-    @Override public void onResume() { super.onResume(); map.onResume(); }
-    @Override public void onPause()  { super.onPause();  map.onPause();  }
+    private void loadUserProfile() {
+        if (auth.getCurrentUser() == null) {
+            return;
+        }
+        String uid = auth.getCurrentUser().getUid();
+
+        db.collection("users").document(uid).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        User user = documentSnapshot.toObject(User.class);
+                        if (user != null && user.getPhotoUrl() != null && !user.getPhotoUrl().isEmpty()) {
+                            Picasso.get()
+                                    .load(user.getPhotoUrl())
+                                    .placeholder(R.drawable.ic_profile_placeholder)
+                                    .error(R.drawable.ic_profile_placeholder)
+                                    .into(profileIcon);
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    // En cas d'erreur, garder l'image par défaut
+                });
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        map.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        map.onPause();
+    }
 }

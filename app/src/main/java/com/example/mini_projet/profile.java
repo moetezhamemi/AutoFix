@@ -27,8 +27,7 @@ import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
+
 import com.squareup.picasso.Picasso;
 
 public class profile extends AppCompatActivity {
@@ -45,8 +44,6 @@ public class profile extends AppCompatActivity {
 
     private FirebaseFirestore db;
     private FirebaseAuth auth;
-    private FirebaseStorage storage;
-    private StorageReference storageRef;
 
     private final ActivityResultLauncher<Intent> galleryLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -92,8 +89,6 @@ public class profile extends AppCompatActivity {
         // Firebase
         db = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();
-        storage = FirebaseStorage.getInstance();
-        storageRef = storage.getReference();
 
         // Clic photo
         profileImage.setOnClickListener(v -> openGallery());
@@ -118,7 +113,8 @@ public class profile extends AppCompatActivity {
         loadUserProfile();
     }
 
-    private void setupEditableField(LinearLayout container, TextView textView, EditText editText, ImageButton editButton, String fieldName) {
+    private void setupEditableField(LinearLayout container, TextView textView, EditText editText,
+            ImageButton editButton, String fieldName) {
         editText.setText(textView.getText());
 
         editButton.setOnClickListener(v -> {
@@ -142,10 +138,13 @@ public class profile extends AppCompatActivity {
                     String uid = auth.getCurrentUser().getUid();
                     db.collection("users").document(uid)
                             .update(fieldName, newValue)
-                            .addOnSuccessListener(aVoid -> Toast.makeText(this, "Mis à jour !", Toast.LENGTH_SHORT).show())
-                            .addOnFailureListener(e -> Toast.makeText(this, "Erreur sauvegarde", Toast.LENGTH_LONG).show());
+                            .addOnSuccessListener(
+                                    aVoid -> Toast.makeText(this, "Mis à jour !", Toast.LENGTH_SHORT).show())
+                            .addOnFailureListener(
+                                    e -> Toast.makeText(this, "Erreur sauvegarde", Toast.LENGTH_LONG).show());
                 } else {
-                    // Pour l'email : on ne sauvegarde RIEN ici → on passe directement à la réauthentification
+                    // Pour l'email : on ne sauvegarde RIEN ici → on passe directement à la
+                    // réauthentification
                     showReauthPopup(newValue);
                 }
 
@@ -166,13 +165,15 @@ public class profile extends AppCompatActivity {
             }
         });
     }
+
     private void showReauthPopup(String newEmail) {
         View view = getLayoutInflater().inflate(R.layout.dialog_reauth_email, null);
         EditText passwordInput = view.findViewById(R.id.password_input);
         MaterialButton btnConfirm = view.findViewById(R.id.btn_confirm_email);
         MaterialButton btnCancel = view.findViewById(R.id.btn_cancel);
 
-        AlertDialog dialog = new AlertDialog.Builder(this, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
+        AlertDialog dialog = new AlertDialog.Builder(this,
+                com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
                 .setView(view)
                 .setCancelable(false)
                 .create();
@@ -189,7 +190,8 @@ public class profile extends AppCompatActivity {
             }
 
             FirebaseUser user = auth.getCurrentUser();
-            if (user == null) return;
+            if (user == null)
+                return;
 
             if (newEmail.equals(user.getEmail())) {
                 Toast.makeText(this, "L'email est identique à celui actuel", Toast.LENGTH_SHORT).show();
@@ -217,28 +219,31 @@ public class profile extends AppCompatActivity {
                                                 db.collection("users").document(user.getUid())
                                                         .update("email", newEmail)
                                                         .addOnSuccessListener(aVoid3 -> {
-                                                            Toast.makeText(this, "Email mis à jour !", Toast.LENGTH_SHORT).show();
+                                                            Toast.makeText(this, "Email mis à jour !",
+                                                                    Toast.LENGTH_SHORT).show();
                                                             // Déconnexion obligatoire
                                                             auth.signOut();
-                                                            Intent intent = new Intent(profile.this, MainActivity2.class);
+                                                            Intent intent = new Intent(profile.this,
+                                                                    MainActivity2.class);
                                                             intent.putExtra("EMAIL_PREFILL", newEmail);
-                                                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                                                                    | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                                             startActivity(intent);
                                                             finish();
                                                         });
                                             })
-                                            .addOnFailureListener(e -> Toast.makeText(this, "Erreur : " + e.getMessage(), Toast.LENGTH_LONG).show());
+                                            .addOnFailureListener(e -> Toast
+                                                    .makeText(this, "Erreur : " + e.getMessage(), Toast.LENGTH_LONG)
+                                                    .show());
                                 })
-                                .addOnFailureListener(e -> Toast.makeText(this, "Mot de passe incorrect", Toast.LENGTH_LONG).show());
+                                .addOnFailureListener(
+                                        e -> Toast.makeText(this, "Mot de passe incorrect", Toast.LENGTH_LONG).show());
 
                     })
-                    .addOnFailureListener(e -> Toast.makeText(this, "Erreur vérification email : " + e.getMessage(), Toast.LENGTH_LONG).show());
+                    .addOnFailureListener(e -> Toast
+                            .makeText(this, "Erreur vérification email : " + e.getMessage(), Toast.LENGTH_LONG).show());
         });
     }
-
-
-
-
 
     private void loadUserProfile() {
         if (auth.getCurrentUser() == null) {
@@ -255,10 +260,12 @@ public class profile extends AppCompatActivity {
                             nameText.setText(user.getName() != null ? user.getName() : "Nom inconnu");
                             nameEdit.setText(nameText.getText());
 
-                            emailText.setText(user.getEmail() != null ? user.getEmail() : auth.getCurrentUser().getEmail());
+                            emailText.setText(
+                                    user.getEmail() != null ? user.getEmail() : auth.getCurrentUser().getEmail());
                             emailEdit.setText(emailText.getText());
 
-                            phoneText.setText(user.getPhone() != null && !user.getPhone().isEmpty() ? user.getPhone() : "Non renseigné");
+                            phoneText.setText(user.getPhone() != null && !user.getPhone().isEmpty() ? user.getPhone()
+                                    : "Non renseigné");
                             phoneEdit.setText(phoneText.getText());
 
                             if (user.getPhotoUrl() != null && !user.getPhotoUrl().isEmpty()) {
@@ -271,6 +278,7 @@ public class profile extends AppCompatActivity {
                     }
                 });
     }
+
     private void reauthenticateAndChangeEmail(FirebaseUser user, String newEmail, String password) {
 
         String oldEmail = user.getEmail();
@@ -323,18 +331,42 @@ public class profile extends AppCompatActivity {
 
     private void uploadImageToFirebase(Uri imageUri) {
         String uid = auth.getCurrentUser().getUid();
-        StorageReference fileRef = storageRef.child("profile_images/" + uid + ".jpg");
 
-        fileRef.putFile(imageUri)
-                .addOnSuccessListener(taskSnapshot -> fileRef.getDownloadUrl()
-                        .addOnSuccessListener(uri -> db.collection("users").document(uid)
-                                .update("photoUrl", uri.toString())
-                                .addOnSuccessListener(aVoid -> {
-                                    Toast.makeText(this, "Photo mise à jour !", Toast.LENGTH_SHORT).show();
-                                    Picasso.get().load(uri).into(profileImage);
-                                })))
-                .addOnFailureListener(e -> Toast.makeText(this, "Erreur upload", Toast.LENGTH_LONG).show());
+        // Utiliser Cloudinary au lieu de Firebase Storage
+        CloudinaryHelper.uploadImage(this, imageUri, new CloudinaryHelper.CloudinaryUploadCallback() {
+            @Override
+            public void onUploadStart() {
+                Toast.makeText(profile.this, "Upload en cours...", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onUploadProgress(int progress) {
+                // Optionnel: afficher une barre de progression
+                // Pour l'instant, on ne fait rien
+            }
+
+            @Override
+            public void onUploadSuccess(String imageUrl) {
+                // Sauvegarder l'URL Cloudinary dans Firestore
+                db.collection("users").document(uid)
+                        .update("photoUrl", imageUrl)
+                        .addOnSuccessListener(aVoid -> {
+                            Toast.makeText(profile.this, "Photo mise à jour !", Toast.LENGTH_SHORT).show();
+                            Picasso.get().load(imageUrl).into(profileImage);
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(profile.this, "Erreur de sauvegarde dans Firestore", Toast.LENGTH_LONG)
+                                    .show();
+                        });
+            }
+
+            @Override
+            public void onUploadError(String errorMessage) {
+                Toast.makeText(profile.this, "Erreur upload: " + errorMessage, Toast.LENGTH_LONG).show();
+            }
+        });
     }
+
     private void showPasswordChangeDialog() {
         View view = getLayoutInflater().inflate(R.layout.dialog_change_password, null);
 
@@ -346,7 +378,8 @@ public class profile extends AppCompatActivity {
         TextView newPassError = view.findViewById(R.id.new_password_error);
         TextView confirmPassError = view.findViewById(R.id.confirm_password_error);
 
-        AlertDialog dialog = new AlertDialog.Builder(this, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
+        AlertDialog dialog = new AlertDialog.Builder(this,
+                com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
                 .setView(view)
                 .setCancelable(true)
                 .create();
@@ -410,7 +443,8 @@ public class profile extends AppCompatActivity {
             }
 
             FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-            if (user == null) return;
+            if (user == null)
+                return;
 
             AuthCredential credential = EmailAuthProvider.getCredential(user.getEmail(), oldP);
             user.reauthenticate(credential)
@@ -431,9 +465,6 @@ public class profile extends AppCompatActivity {
                     });
         });
     }
-
-
-
 
     private boolean validateOldPass(EditText et, TextView error) {
         String s = et.getText().toString().trim();
@@ -475,15 +506,20 @@ public class profile extends AppCompatActivity {
     }
 
     private abstract class SimpleTextWatcher implements TextWatcher {
-        @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-        @Override public void afterTextChanged(Editable s) {}
-    }
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        }
 
+        @Override
+        public void afterTextChanged(Editable s) {
+        }
+    }
 
     private void changeUserPassword(String oldPassword, String newPassword) {
 
         FirebaseUser user = auth.getCurrentUser();
-        if (user == null) return;
+        if (user == null)
+            return;
 
         String email = user.getEmail();
         AuthCredential credential = EmailAuthProvider.getCredential(email, oldPassword);
@@ -497,13 +533,13 @@ public class profile extends AppCompatActivity {
                                 Toast.makeText(this, "Password updated successfully!", Toast.LENGTH_LONG).show();
                             })
                             .addOnFailureListener(e -> {
-                                Toast.makeText(this, "Error updating password: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                Toast.makeText(this, "Error updating password: " + e.getMessage(), Toast.LENGTH_LONG)
+                                        .show();
                             });
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(this, "Incorrect old password", Toast.LENGTH_LONG).show();
                 });
     }
-
 
 }
