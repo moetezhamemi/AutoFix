@@ -321,18 +321,4 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Logout Button - Bottom Right (like admin dashboard) -->
-    <ImageView
-        android:id="@+id/logoutButton"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
-        android:layout_marginEnd="24dp"
-        android:layout_marginBottom="24dp"
-        android:background="@drawable/btn_logout_circle"
-        android:padding="14dp"
-        android:src="@drawable/ic_logout"
-        app:tint="@color/white"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>

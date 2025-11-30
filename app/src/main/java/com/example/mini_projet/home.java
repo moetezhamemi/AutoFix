@@ -81,6 +81,13 @@ public class home extends AppCompatActivity {
         loadUserProfile();
         getUserLocation();
 
+        // Check if location was shared from chat
+        if (getIntent().hasExtra("sharedLatitude") && getIntent().hasExtra("sharedLongitude")) {
+            double sharedLat = getIntent().getDoubleExtra("sharedLatitude", 0);
+            double sharedLng = getIntent().getDoubleExtra("sharedLongitude", 0);
+            displaySharedLocation(sharedLat, sharedLng);
+        }
+
         profileIcon.setOnClickListener(v -> {
             Intent intent = new Intent(home.this, profile.class);
             startActivity(intent);
@@ -213,6 +220,16 @@ public class home extends AppCompatActivity {
                                             location.getLongitude());
                                     map.getController().setCenter(userLocation);
                                     map.getController().setZoom(12.0);
+
+                                    // Add green marker for user's current position
+                                    Marker userMarker = new Marker(map);
+                                    userMarker.setPosition(userLocation);
+                                    userMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                                    userMarker.setTitle("Your Location");
+                                    userMarker.setSnippet("You are here");
+                                    userMarker.setIcon(getResources().getDrawable(R.drawable.ic_user_location_marker));
+                                    map.getOverlays().add(userMarker);
+                                    map.invalidate();
                                 }
                             } catch (IOException e) {
                                 e.printStackTrace();
@@ -308,5 +325,27 @@ public class home extends AppCompatActivity {
     public void onPause() {
         super.onPause();
         map.onPause();
+    }
+
+    private void displaySharedLocation(double latitude, double longitude) {
+        GeoPoint sharedPoint = new GeoPoint(latitude, longitude);
+        
+        // Create red marker for shared location
+        Marker sharedMarker = new Marker(map);
+        sharedMarker.setPosition(sharedPoint);
+        sharedMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        sharedMarker.setTitle("Client Location");
+        
+        // Set red color for the marker
+        sharedMarker.setIcon(getResources().getDrawable(android.R.drawable.ic_dialog_map));
+        sharedMarker.setTextIcon("📍"); // Red pin emoji
+        
+        map.getOverlays().add(sharedMarker);
+        
+        // Zoom to shared location
+        map.getController().setZoom(15.0);
+        map.getController().setCenter(sharedPoint);
+        
+        Toast.makeText(this, "Client location displayed", Toast.LENGTH_SHORT).show();
     }
 }

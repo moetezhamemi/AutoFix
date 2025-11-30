@@ -18,7 +18,7 @@ public class MechanicDashboardActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private CardView cardAddGarage, cardManageGarages, cardDemands;
-    private ImageView logoutButton, chatIcon;
+    private ImageView chatIcon;
     private CircleImageView profileIcon;
 
     @Override
@@ -32,7 +32,6 @@ public class MechanicDashboardActivity extends AppCompatActivity {
         cardAddGarage = findViewById(R.id.cardAddGarage);
         cardManageGarages = findViewById(R.id.cardManageGarages);
         cardDemands = findViewById(R.id.cardDemands);
-        logoutButton = findViewById(R.id.logoutButton);
         profileIcon = findViewById(R.id.profile_icon);
         chatIcon = findViewById(R.id.chat_icon);
 
@@ -51,12 +50,6 @@ public class MechanicDashboardActivity extends AppCompatActivity {
             startActivity(new Intent(MechanicDashboardActivity.this, MechanicDemandsActivity.class));
         });
 
-        // Logout Button
-        logoutButton.setOnClickListener(v -> {
-            mAuth.signOut();
-            startActivity(new Intent(MechanicDashboardActivity.this, MainActivity2.class));
-            finish();
-        });
 
         profileIcon.setOnClickListener(v -> {
             startActivity(new Intent(MechanicDashboardActivity.this, profile.class));
