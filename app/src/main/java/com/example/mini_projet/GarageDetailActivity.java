@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mini_projet.adapter.ReviewAdapter;
+import com.example.mini_projet.models.Chat;
 import com.example.mini_projet.models.Garage;
 import com.example.mini_projet.models.Review;
 import com.example.mini_projet.models.User;
@@ -38,7 +39,7 @@ public class GarageDetailActivity extends AppCompatActivity {
     private LinearLayout reviewInputSection;
     private EditText etReviewComment;
     private RecyclerView reviewsRecyclerView;
-    
+
     private FirebaseFirestore db;
     private FirebaseAuth auth;
     private String garageId;
@@ -84,9 +85,9 @@ public class GarageDetailActivity extends AppCompatActivity {
         noReviewsText = findViewById(R.id.noReviewsText);
 
         reviewsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        
+
         String currentUserId = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
-        
+
         reviewAdapter = new ReviewAdapter(this, reviewList, currentUserId, new ReviewAdapter.OnReviewActionListener() {
             @Override
             public void onEdit(Review review) {
@@ -108,18 +109,18 @@ public class GarageDetailActivity extends AppCompatActivity {
         final EditText input = new EditText(this);
         input.setText(review.getComment());
         input.setSelection(input.getText().length());
-        
+
         // Add padding and margin
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
         params.setMargins(40, 20, 40, 20);
         input.setLayoutParams(params);
-        
+
         LinearLayout container = new LinearLayout(this);
         container.addView(input);
         container.setPadding(40, 20, 40, 20);
-        
+
         builder.setView(container);
 
         builder.setPositiveButton("Save", (dialog, which) -> {
@@ -183,7 +184,7 @@ public class GarageDetailActivity extends AppCompatActivity {
         garageName.setText(garage.getName());
         garageDescription.setText(garage.getDescription());
         ratingText.setText(String.format("%.1f", garage.getRating()));
-        
+
         if (garage.getReviewCount() > 0) {
             reviewCount.setText("[" + garage.getReviewCount() + "+ Review]");
         } else {
@@ -242,7 +243,7 @@ public class GarageDetailActivity extends AppCompatActivity {
                                 reviewList.add(review);
                             }
                         }
-                        
+
                         // Sort by timestamp descending (newest first)
                         reviewList.sort((r1, r2) -> Long.compare(r2.getTimestamp(), r1.getTimestamp()));
 
@@ -279,7 +280,41 @@ public class GarageDetailActivity extends AppCompatActivity {
         });
 
         btnMessage.setOnClickListener(v -> {
-            Toast.makeText(this, "Message feature coming soon", Toast.LENGTH_SHORT).show();
+            if (auth.getCurrentUser() == null) {
+                Toast.makeText(this, "Please login to send message", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (garage != null && garage.getMechanicId() != null) {
+                String ownerId = garage.getMechanicId();
+                String myId = auth.getCurrentUser().getUid();
+                String currentGarageId = garage.getId();
+
+                db.collection("chats")
+                        .whereArrayContains("participants", myId)
+                        .get()
+                        .addOnSuccessListener(querySnapshot -> {
+                            String existingChatId = null;
+                            for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                                Chat chat = doc.toObject(Chat.class);
+                                // Check if chat is with this garage
+                                if (chat != null && currentGarageId.equals(chat.getGarageId())) {
+                                    existingChatId = chat.getChatId();
+                                    break;
+                                }
+                            }
+
+                            Intent intent = new Intent(GarageDetailActivity.this, ChatActivity.class);
+                            if (existingChatId != null) {
+                                intent.putExtra("chatId", existingChatId);
+                            }
+                            intent.putExtra("otherUserId", ownerId);
+                            intent.putExtra("garageId", currentGarageId);
+                            startActivity(intent);
+                        });
+            } else {
+                Toast.makeText(this, "Cannot contact this garage", Toast.LENGTH_SHORT).show();
+            }
         });
 
         btnSubmitReview.setOnClickListener(v -> submitReview());
@@ -288,12 +323,12 @@ public class GarageDetailActivity extends AppCompatActivity {
     private void showRatingDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_rate_garage, null);
-        
+
         RatingBar dialogRatingBar = dialogView.findViewById(R.id.dialogRatingBar);
         Button btnSubmitRating = dialogView.findViewById(R.id.btnSubmitRating);
-        
+
         AlertDialog dialog = builder.setView(dialogView).create();
-        
+
         btnSubmitRating.setOnClickListener(v -> {
             float rating = dialogRatingBar.getRating();
             if (rating > 0) {
@@ -304,7 +339,7 @@ public class GarageDetailActivity extends AppCompatActivity {
                 Toast.makeText(this, "Please select a rating", Toast.LENGTH_SHORT).show();
             }
         });
-        
+
         dialog.show();
     }
 
@@ -322,7 +357,7 @@ public class GarageDetailActivity extends AppCompatActivity {
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     DocumentSnapshot ratingDoc = null;
-                    
+
                     // Find existing document with rating > 0
                     if (!queryDocumentSnapshots.isEmpty()) {
                         for (DocumentSnapshot doc : queryDocumentSnapshots) {
@@ -342,7 +377,8 @@ public class GarageDetailActivity extends AppCompatActivity {
                                     Toast.makeText(this, "Rating updated successfully", Toast.LENGTH_SHORT).show();
                                     loadReviews();
                                 })
-                                .addOnFailureListener(e -> Toast.makeText(this, "Failed to update rating", Toast.LENGTH_SHORT).show());
+                                .addOnFailureListener(e -> Toast
+                                        .makeText(this, "Failed to update rating", Toast.LENGTH_SHORT).show());
                     } else {
                         // Create new review for rating
                         createNewReview(userId, rating, "");
@@ -364,7 +400,7 @@ public class GarageDetailActivity extends AppCompatActivity {
         }
 
         String userId = auth.getCurrentUser().getUid();
-        
+
         // Always create a new review for comments (allowing multiple comments)
         createNewReview(userId, 0, comment);
     }
@@ -381,12 +417,14 @@ public class GarageDetailActivity extends AppCompatActivity {
                     }
 
                     String reviewId = db.collection("reviews").document().getId();
-                    Review review = new Review(reviewId, garageId, userId, userName, rating, comment, System.currentTimeMillis());
+                    Review review = new Review(reviewId, garageId, userId, userName, rating, comment,
+                            System.currentTimeMillis());
 
                     db.collection("reviews").document(reviewId)
                             .set(review)
                             .addOnSuccessListener(aVoid -> {
-                                if (rating > 0) updateGarageRating();
+                                if (rating > 0)
+                                    updateGarageRating();
                                 if (!comment.isEmpty()) {
                                     Toast.makeText(this, "Comment submitted successfully", Toast.LENGTH_SHORT).show();
                                     etReviewComment.setText("");
@@ -395,7 +433,8 @@ public class GarageDetailActivity extends AppCompatActivity {
                                 }
                                 loadReviews();
                             })
-                            .addOnFailureListener(e -> Toast.makeText(this, "Failed to submit", Toast.LENGTH_SHORT).show());
+                            .addOnFailureListener(
+                                    e -> Toast.makeText(this, "Failed to submit", Toast.LENGTH_SHORT).show());
                 });
     }
 

@@ -8,6 +8,7 @@ import android.location.Geocoder;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.view.inputmethod.EditorInfo;
@@ -66,6 +67,7 @@ public class home extends AppCompatActivity {
         map = findViewById(R.id.map);
         searchBar = findViewById(R.id.search_bar);
         profileIcon = findViewById(R.id.profile_icon);
+        ImageView chatListIcon = findViewById(R.id.chat_list_icon);
         locationText = findViewById(R.id.location_text);
 
         auth = FirebaseAuth.getInstance();
@@ -81,6 +83,11 @@ public class home extends AppCompatActivity {
 
         profileIcon.setOnClickListener(v -> {
             Intent intent = new Intent(home.this, profile.class);
+            startActivity(intent);
+        });
+
+        chatListIcon.setOnClickListener(v -> {
+            Intent intent = new Intent(home.this, ChatListActivity.class);
             startActivity(intent);
         });
     }
@@ -112,24 +119,24 @@ public class home extends AppCompatActivity {
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     if (!queryDocumentSnapshots.isEmpty()) {
                         for (com.google.firebase.firestore.DocumentSnapshot document : queryDocumentSnapshots) {
-                            com.example.mini_projet.models.Garage garage = document.toObject(com.example.mini_projet.models.Garage.class);
+                            com.example.mini_projet.models.Garage garage = document
+                                    .toObject(com.example.mini_projet.models.Garage.class);
                             if (garage != null && garage.getAddress() != null) {
                                 // Convert Firestore GeoPoint to OSMDroid GeoPoint
                                 GeoPoint geoPoint = new GeoPoint(
                                         garage.getAddress().getLatitude(),
-                                        garage.getAddress().getLongitude()
-                                );
-                                
+                                        garage.getAddress().getLongitude());
+
                                 // Add to cityMap for search functionality
                                 cityMap.put(garage.getName().toLowerCase(), geoPoint);
-                                
+
                                 // Create marker for the garage
                                 Marker marker = new Marker(map);
                                 marker.setPosition(geoPoint);
                                 marker.setTitle(garage.getName() + " ⭐ " + String.format("%.1f", garage.getRating()));
                                 marker.setSnippet("Phone: " + garage.getPhone() + "\n" + garage.getDescription());
                                 marker.setIcon(getResources().getDrawable(R.drawable.ic_garage_marker));
-                                
+
                                 // Set click listener to open garage details
                                 marker.setOnMarkerClickListener((m, mapView) -> {
                                     Intent intent = new Intent(home.this, GarageDetailActivity.class);
@@ -137,7 +144,7 @@ public class home extends AppCompatActivity {
                                     startActivity(intent);
                                     return true;
                                 });
-                                
+
                                 map.getOverlays().add(marker);
                             }
                         }

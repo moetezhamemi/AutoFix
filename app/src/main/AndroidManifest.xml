@@ -90,6 +90,7 @@
             android:name=".MechanicGaragesListActivity"
             android:exported="false" />
 
+
         <!-- Edit Garage -->
         <activity
             android:name=".EditGarageActivity"
@@ -98,6 +99,24 @@
         <!-- Garage Detail -->
         <activity
             android:name=".GarageDetailActivity"
+            android:exported="false" />
+
+        <!-- Chat Activities -->
+        <activity
+            android:name=".ChatActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustPan" />
+
+        <activity
+            android:name=".ChatListActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".MechanicChatGaragesActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".MechanicGarageChatListActivity"
             android:exported="false" />
 
         <meta-data
