@@ -2,7 +2,7 @@ package com.example.mini_projet.models;
 
 import com.google.firebase.firestore.GeoPoint;
 
-public class  Garage {
+public class Garage {
     private String id;
     private String name;
     private String description;
@@ -13,16 +13,18 @@ public class  Garage {
     private String photoUrl;
     private float rating;
     private int reviewCount;
+    private String status; // "PENDING", "ACCEPTED", "REJECTED"
 
     // Default constructor (required for Firestore)
     public Garage() {
         this.rating = 1.0f; // Default rating
         this.reviewCount = 0;
+        this.status = "PENDING";
     }
 
     // Constructor
-    public Garage(String id, String name, String description, GeoPoint address, 
-                  String phone, String mechanicId, String photoUrl) {
+    public Garage(String id, String name, String description, GeoPoint address,
+            String phone, String mechanicId, String photoUrl) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -33,6 +35,7 @@ public class  Garage {
         this.enabled = false; // Default to false, requires admin approval
         this.rating = 1.0f; // Default rating
         this.reviewCount = 0;
+        this.status = "PENDING";
     }
 
     // Getters and Setters
@@ -114,5 +117,13 @@ public class  Garage {
 
     public void setReviewCount(int reviewCount) {
         this.reviewCount = reviewCount;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

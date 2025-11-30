@@ -57,7 +57,7 @@ public class ManageDemandsActivity extends AppCompatActivity {
                     if (!queryDocumentSnapshots.isEmpty()) {
                         for (DocumentSnapshot document : queryDocumentSnapshots) {
                             Garage garage = document.toObject(Garage.class);
-                            if (garage != null) {
+                            if (garage != null && !"REJECTED".equals(garage.getStatus())) {
                                 garage.setId(document.getId());
                                 garageList.add(garage);
                             }
@@ -70,7 +70,8 @@ public class ManageDemandsActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Error fetching garage requests: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Error fetching garage requests: " + e.getMessage(), Toast.LENGTH_SHORT)
+                            .show();
                 });
     }
 

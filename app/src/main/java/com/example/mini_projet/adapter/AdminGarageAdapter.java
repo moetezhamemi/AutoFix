@@ -1,6 +1,7 @@
 package com.example.mini_projet.adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +10,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.mini_projet.GarageDetailActivity;
 import com.example.mini_projet.R;
 import com.example.mini_projet.models.Garage;
 import com.squareup.picasso.Picasso;
@@ -60,6 +62,14 @@ public class AdminGarageAdapter extends RecyclerView.Adapter<AdminGarageAdapter.
                     .setNegativeButton("Cancel", null)
                     .show();
         });
+
+        // Click to view details
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(context, GarageDetailActivity.class);
+            intent.putExtra("garageId", garage.getId());
+            intent.putExtra("isAdminView", true);
+            context.startActivity(intent);
+        });
     }
 
     private void deleteGarage(Garage garage, int position) {
@@ -73,7 +83,8 @@ public class AdminGarageAdapter extends RecyclerView.Adapter<AdminGarageAdapter.
                     notifyItemRangeChanged(position, garageList.size());
                 })
                 .addOnFailureListener(e -> {
-                    android.widget.Toast.makeText(context, "Error deleting garage", android.widget.Toast.LENGTH_SHORT).show();
+                    android.widget.Toast.makeText(context, "Error deleting garage", android.widget.Toast.LENGTH_SHORT)
+                            .show();
                 });
     }
 

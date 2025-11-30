@@ -71,7 +71,7 @@ public class GarageRequestAdapter extends RecyclerView.Adapter<GarageRequestAdap
 
     private void acceptGarage(Garage garage, int position) {
         db.collection("garages").document(garage.getId())
-                .update("enabled", true)
+                .update("enabled", true, "status", "ACCEPTED")
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(context, "Garage accepted", Toast.LENGTH_SHORT).show();
                     garageList.remove(position);
@@ -88,12 +88,15 @@ public class GarageRequestAdapter extends RecyclerView.Adapter<GarageRequestAdap
 
     private void rejectGarage(Garage garage, int position) {
         db.collection("garages").document(garage.getId())
-                .delete()
+                .update("status", "REJECTED")
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(context, "Garage rejected", Toast.LENGTH_SHORT).show();
                     garageList.remove(position);
                     notifyItemRemoved(position);
                     notifyItemRangeChanged(position, garageList.size());
+
+                    // Get mechanic email and send rejection notification
+                    getMechanicEmailAndNotifyRejection(garage.getMechanicId(), garage.getName());
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(context, "Error rejecting garage", Toast.LENGTH_SHORT).show();
@@ -107,7 +110,10 @@ public class GarageRequestAdapter extends RecyclerView.Adapter<GarageRequestAdap
                     if (documentSnapshot.exists()) {
                         User mechanic = documentSnapshot.toObject(User.class);
                         if (mechanic != null && mechanic.getEmail() != null) {
-                            sendEmail(mechanic.getEmail(), mechanic.getName(), garageName);
+                            String subject = "AutoFix Garage Approval";
+                            String body = "Hello " + mechanic.getName() + ",\n\nYour garage '" + garageName +
+                                    "' has been approved by the admin. You can now start managing your garage services.\n\nBest regards,\nAutoFix Team";
+                            sendEmail(mechanic.getEmail(), subject, body);
                         }
                     }
                 })
@@ -116,13 +122,32 @@ public class GarageRequestAdapter extends RecyclerView.Adapter<GarageRequestAdap
                 });
     }
 
-    private void sendEmail(String email, String mechanicName, String garageName) {
+    private void getMechanicEmailAndNotifyRejection(String mechanicId, String garageName) {
+        db.collection("users").document(mechanicId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        User mechanic = documentSnapshot.toObject(User.class);
+                        if (mechanic != null && mechanic.getEmail() != null) {
+                            String subject = "AutoFix Garage Request Update";
+                            String body = "Hello " + mechanic.getName()
+                                    + ",\n\nWe regret to inform you that your request for garage '" + garageName +
+                                    "' has been declined by the admin.\n\nBest regards,\nAutoFix Team";
+                            sendEmail(mechanic.getEmail(), subject, body);
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(context, "Error fetching mechanic details", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void sendEmail(String email, String subject, String body) {
         Intent intent = new Intent(Intent.ACTION_SENDTO);
         intent.setData(Uri.parse("mailto:"));
-        intent.putExtra(Intent.EXTRA_EMAIL, new String[]{email});
-        intent.putExtra(Intent.EXTRA_SUBJECT, "AutoFix Garage Approval");
-        intent.putExtra(Intent.EXTRA_TEXT, "Hello " + mechanicName + ",\n\nYour garage '" + garageName + 
-                "' has been approved by the admin. You can now start managing your garage services.\n\nBest regards,\nAutoFix Team");
+        intent.putExtra(Intent.EXTRA_EMAIL, new String[] { email });
+        intent.putExtra(Intent.EXTRA_SUBJECT, subject);
+        intent.putExtra(Intent.EXTRA_TEXT, body);
 
         try {
             context.startActivity(Intent.createChooser(intent, "Send email..."));

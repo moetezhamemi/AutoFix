@@ -100,6 +100,12 @@ public class GarageDetailActivity extends AppCompatActivity {
             }
         });
         reviewsRecyclerView.setAdapter(reviewAdapter);
+
+        // Hide message button and review input if admin view
+        if (getIntent().getBooleanExtra("isAdminView", false)) {
+            btnMessage.setVisibility(View.GONE);
+            reviewInputSection.setVisibility(View.GONE);
+        }
     }
 
     private void showEditReviewDialog(Review review) {

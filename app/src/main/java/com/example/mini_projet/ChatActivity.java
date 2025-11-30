@@ -38,7 +38,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 100;
 
-    private ImageView btnBack;
+    private ImageView btnBack, btnCall;
     private TextView chatTitle;
     private EditText textSend;
     private ImageButton btnSend, btnShareLocation;
@@ -60,6 +60,7 @@ public class ChatActivity extends AppCompatActivity {
         setContentView(R.layout.activity_chat);
 
         btnBack = findViewById(R.id.btnBack);
+        btnCall = findViewById(R.id.btnCall);
         chatTitle = findViewById(R.id.chatTitle);
         textSend = findViewById(R.id.textSend);
         btnSend = findViewById(R.id.btnSend);
@@ -84,7 +85,18 @@ public class ChatActivity extends AppCompatActivity {
             db.collection("garages").document(garageId).get().addOnSuccessListener(doc -> {
                 if (doc.exists()) {
                     String garageName = doc.getString("name");
+                    String phone = doc.getString("phone");
                     chatTitle.setText(garageName != null ? garageName : "Garage");
+
+                    if (phone != null && !phone.isEmpty()) {
+                        btnCall.setVisibility(View.VISIBLE);
+                        btnCall.setOnClickListener(v -> {
+                            android.content.Intent intent = new android.content.Intent(
+                                    android.content.Intent.ACTION_DIAL);
+                            intent.setData(android.net.Uri.parse("tel:" + phone));
+                            startActivity(intent);
+                        });
+                    }
                 }
             });
         } else {
@@ -127,10 +139,13 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void shareLocation() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this,
+                        Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                    new String[] { Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION },
                     LOCATION_PERMISSION_REQUEST_CODE);
             return;
         }
@@ -149,7 +164,8 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -200,7 +216,8 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
-    private void addMessageToSubcollection(String sender, String message, long timestamp, String type, Double latitude, Double longitude) {
+    private void addMessageToSubcollection(String sender, String message, long timestamp, String type, Double latitude,
+            Double longitude) {
         Message msg = new Message(sender, message, timestamp, type, latitude, longitude);
         db.collection("chats").document(chatId).collection("messages").add(msg);
     }
