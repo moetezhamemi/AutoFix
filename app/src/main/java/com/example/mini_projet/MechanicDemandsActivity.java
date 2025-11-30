@@ -10,29 +10,32 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.mini_projet.adapter.GarageRequestAdapter;
+import com.example.mini_projet.adapter.MechanicDemandStatusAdapter;
 import com.example.mini_projet.models.Garage;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ManageDemandsActivity extends AppCompatActivity {
+public class MechanicDemandsActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
-    private GarageRequestAdapter adapter;
-    private List<Garage> garageList;
     private FirebaseFirestore db;
+    private FirebaseAuth mAuth;
     private TextView emptyView;
     private ImageView btnBack;
+    private MechanicDemandStatusAdapter adapter;
+    private List<Garage> garageList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_manage_demands);
+        setContentView(R.layout.activity_mechanic_demands);
 
         db = FirebaseFirestore.getInstance();
+        mAuth = FirebaseAuth.getInstance();
         garageList = new ArrayList<>();
 
         recyclerView = findViewById(R.id.recyclerViewDemands);
@@ -40,17 +43,20 @@ public class ManageDemandsActivity extends AppCompatActivity {
         btnBack = findViewById(R.id.btnBack);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new GarageRequestAdapter(this, garageList);
+        adapter = new MechanicDemandStatusAdapter(this, garageList);
         recyclerView.setAdapter(adapter);
 
         btnBack.setOnClickListener(v -> finish());
 
-        fetchPendingGarages();
+        fetchMyDemands();
     }
 
-    private void fetchPendingGarages() {
+    private void fetchMyDemands() {
+        if (mAuth.getCurrentUser() == null) return;
+        String mechanicId = mAuth.getCurrentUser().getUid();
+
         db.collection("garages")
-                .whereEqualTo("enabled", false)
+                .whereEqualTo("mechanicId", mechanicId)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     garageList.clear();
@@ -66,17 +72,11 @@ public class ManageDemandsActivity extends AppCompatActivity {
                         emptyView.setVisibility(View.GONE);
                     } else {
                         emptyView.setVisibility(View.VISIBLE);
-                        emptyView.setText("No pending garage requests");
+                        emptyView.setText("No demands found");
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Error fetching garage requests: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Error fetching demands: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        fetchPendingGarages();
     }
 }

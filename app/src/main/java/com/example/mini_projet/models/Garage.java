@@ -1,38 +1,41 @@
 package com.example.mini_projet.models;
 
 import com.google.firebase.firestore.GeoPoint;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Garage {
     private String id;
     private String name;
     private String description;
-    private String phoneNumber;
-    private String imageUrl;
-    private GeoPoint location;
-    private float rating;
-    private List<Comment> comments;
+    private GeoPoint address;
+    private String phone;
+    private String mechanicId;
     private boolean enabled;
+    private String photoUrl;
+    private float rating;
+    private int reviewCount;
 
+    // Default constructor (required for Firestore)
     public Garage() {
-        // Required for Firestore
-        this.enabled = false; // Default to false as requested
-        this.comments = new ArrayList<>();
+        this.rating = 1.0f; // Default rating
+        this.reviewCount = 0;
     }
 
-    public Garage(String id, String name, String description, String phoneNumber, String imageUrl, GeoPoint location) {
+    // Constructor
+    public Garage(String id, String name, String description, GeoPoint address, 
+                  String phone, String mechanicId, String photoUrl) {
         this.id = id;
         this.name = name;
         this.description = description;
-        this.phoneNumber = phoneNumber;
-        this.imageUrl = imageUrl;
-        this.location = location;
-        this.enabled = false;
-        this.comments = new ArrayList<>();
-        this.rating = 0;
+        this.address = address;
+        this.phone = phone;
+        this.mechanicId = mechanicId;
+        this.photoUrl = photoUrl;
+        this.enabled = false; // Default to false, requires admin approval
+        this.rating = 1.0f; // Default rating
+        this.reviewCount = 0;
     }
 
+    // Getters and Setters
     public String getId() {
         return id;
     }
@@ -57,28 +60,44 @@ public class Garage {
         this.description = description;
     }
 
-    public String getPhoneNumber() {
-        return phoneNumber;
+    public GeoPoint getAddress() {
+        return address;
     }
 
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
+    public void setAddress(GeoPoint address) {
+        this.address = address;
     }
 
-    public String getImageUrl() {
-        return imageUrl;
+    public String getPhone() {
+        return phone;
     }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 
-    public GeoPoint getLocation() {
-        return location;
+    public String getMechanicId() {
+        return mechanicId;
     }
 
-    public void setLocation(GeoPoint location) {
-        this.location = location;
+    public void setMechanicId(String mechanicId) {
+        this.mechanicId = mechanicId;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
     }
 
     public float getRating() {
@@ -89,19 +108,11 @@ public class Garage {
         this.rating = rating;
     }
 
-    public List<Comment> getComments() {
-        return comments;
+    public int getReviewCount() {
+        return reviewCount;
     }
 
-    public void setComments(List<Comment> comments) {
-        this.comments = comments;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
+    public void setReviewCount(int reviewCount) {
+        this.reviewCount = reviewCount;
     }
 }

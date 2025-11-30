@@ -105,23 +105,48 @@ public class home extends AppCompatActivity {
     }
 
     private void initCityList() {
-        cityMap.put("tunis", new GeoPoint(36.8065, 10.1815));
-        cityMap.put("ariana", new GeoPoint(36.8665, 10.1647));
-        cityMap.put("hammamet", new GeoPoint(36.3743, 10.6167));
-        cityMap.put("sousse", new GeoPoint(35.8375, 10.6333));
-        cityMap.put("mahdia", new GeoPoint(35.6722, 10.0972));
-        cityMap.put("el jem", new GeoPoint(35.0333, 11.0333));
-        cityMap.put("sfax", new GeoPoint(34.7351, 10.7605));
-        cityMap.put("kasserine", new GeoPoint(35.1722, 8.8305));
-        cityMap.put("sidi bouzid", new GeoPoint(35.0382, 9.4839));
-        cityMap.put("gabes", new GeoPoint(33.8815, 10.0982));
-
-        for (Map.Entry<String, GeoPoint> e : cityMap.entrySet()) {
-            Marker m = new Marker(map);
-            m.setPosition(e.getValue());
-            m.setTitle(e.getKey().substring(0, 1).toUpperCase() + e.getKey().substring(1));
-            map.getOverlays().add(m);
-        }
+        // Fetch approved garages from Firestore
+        db.collection("garages")
+                .whereEqualTo("enabled", true)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        for (com.google.firebase.firestore.DocumentSnapshot document : queryDocumentSnapshots) {
+                            com.example.mini_projet.models.Garage garage = document.toObject(com.example.mini_projet.models.Garage.class);
+                            if (garage != null && garage.getAddress() != null) {
+                                // Convert Firestore GeoPoint to OSMDroid GeoPoint
+                                GeoPoint geoPoint = new GeoPoint(
+                                        garage.getAddress().getLatitude(),
+                                        garage.getAddress().getLongitude()
+                                );
+                                
+                                // Add to cityMap for search functionality
+                                cityMap.put(garage.getName().toLowerCase(), geoPoint);
+                                
+                                // Create marker for the garage
+                                Marker marker = new Marker(map);
+                                marker.setPosition(geoPoint);
+                                marker.setTitle(garage.getName() + " ⭐ " + String.format("%.1f", garage.getRating()));
+                                marker.setSnippet("Phone: " + garage.getPhone() + "\n" + garage.getDescription());
+                                marker.setIcon(getResources().getDrawable(R.drawable.ic_garage_marker));
+                                
+                                // Set click listener to open garage details
+                                marker.setOnMarkerClickListener((m, mapView) -> {
+                                    Intent intent = new Intent(home.this, GarageDetailActivity.class);
+                                    intent.putExtra("garageId", garage.getId());
+                                    startActivity(intent);
+                                    return true;
+                                });
+                                
+                                map.getOverlays().add(marker);
+                            }
+                        }
+                        map.invalidate(); // Refresh the map
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Error loading garages: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void requestLocationPermission() {

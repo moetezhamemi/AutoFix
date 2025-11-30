@@ -1,5 +1,6 @@
 package com.example.mini_projet;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
@@ -10,19 +11,19 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.mini_projet.adapter.GarageRequestAdapter;
-import com.example.mini_projet.models.Garage;
+import com.example.mini_projet.adapter.MechanicListAdapter;
+import com.example.mini_projet.models.User;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ManageDemandsActivity extends AppCompatActivity {
+public class ManageGaragesActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
-    private GarageRequestAdapter adapter;
-    private List<Garage> garageList;
+    private MechanicListAdapter adapter;
+    private List<User> mechanicList;
     private FirebaseFirestore db;
     private TextView emptyView;
     private ImageView btnBack;
@@ -30,53 +31,48 @@ public class ManageDemandsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_manage_demands);
+        setContentView(R.layout.activity_manage_garages);
 
         db = FirebaseFirestore.getInstance();
-        garageList = new ArrayList<>();
+        mechanicList = new ArrayList<>();
 
-        recyclerView = findViewById(R.id.recyclerViewDemands);
+        recyclerView = findViewById(R.id.recyclerViewGarages);
         emptyView = findViewById(R.id.emptyView);
         btnBack = findViewById(R.id.btnBack);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new GarageRequestAdapter(this, garageList);
+        adapter = new MechanicListAdapter(this, mechanicList);
         recyclerView.setAdapter(adapter);
 
         btnBack.setOnClickListener(v -> finish());
 
-        fetchPendingGarages();
+        fetchApprovedMechanics();
     }
 
-    private void fetchPendingGarages() {
-        db.collection("garages")
-                .whereEqualTo("enabled", false)
+    private void fetchApprovedMechanics() {
+        db.collection("users")
+                .whereEqualTo("role", "mechanic")
+                .whereEqualTo("enabled", true)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    garageList.clear();
+                    mechanicList.clear();
                     if (!queryDocumentSnapshots.isEmpty()) {
                         for (DocumentSnapshot document : queryDocumentSnapshots) {
-                            Garage garage = document.toObject(Garage.class);
-                            if (garage != null) {
-                                garage.setId(document.getId());
-                                garageList.add(garage);
+                            User mechanic = document.toObject(User.class);
+                            if (mechanic != null) {
+                                mechanic.setId(document.getId());
+                                mechanicList.add(mechanic);
                             }
                         }
                         adapter.notifyDataSetChanged();
                         emptyView.setVisibility(View.GONE);
+                        emptyView.setText("No approved mechanics yet");
                     } else {
                         emptyView.setVisibility(View.VISIBLE);
-                        emptyView.setText("No pending garage requests");
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Error fetching garage requests: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Error fetching mechanics: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        fetchPendingGarages();
     }
 }

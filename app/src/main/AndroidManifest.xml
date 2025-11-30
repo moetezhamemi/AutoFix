@@ -51,13 +51,53 @@
             android:name=".EditProfile"
             android:exported="false" />
 
-        <!-- New Admin Activities -->
+        <!-- Admin Activities -->
         <activity
             android:name=".AdminDashboardActivity"
             android:exported="false" />
             
         <activity
             android:name=".ManageDemandsActivity"
+            android:exported="false" />
+            
+        <!-- Mechanic Dashboard -->
+        <activity
+            android:name=".MechanicDashboardActivity"
+            android:exported="false" />
+            
+        <!-- Add Garage -->
+        <activity
+            android:name=".AddGarageActivity"
+            android:exported="false" />
+            
+        <!-- Mechanic Manage Garages -->
+        <activity
+            android:name=".MechanicManageGaragesActivity"
+            android:exported="false" />
+            
+        <!-- Mechanic Demands -->
+        <activity
+            android:name=".MechanicDemandsActivity"
+            android:exported="false" />
+            
+        <!-- Manage Garages (Admin) -->
+        <activity
+            android:name=".ManageGaragesActivity"
+            android:exported="false" />
+            
+        <!-- Mechanic Garages List (Admin View) -->
+        <activity
+            android:name=".MechanicGaragesListActivity"
+            android:exported="false" />
+
+        <!-- Edit Garage -->
+        <activity
+            android:name=".EditGarageActivity"
+            android:exported="false" />
+
+        <!-- Garage Detail -->
+        <activity
+            android:name=".GarageDetailActivity"
             android:exported="false" />
 
         <meta-data

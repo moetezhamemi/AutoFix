@@ -10,47 +10,53 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.mini_projet.adapter.GarageRequestAdapter;
+import com.example.mini_projet.adapter.MechanicGarageAdapter;
 import com.example.mini_projet.models.Garage;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ManageDemandsActivity extends AppCompatActivity {
+public class MechanicManageGaragesActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
-    private GarageRequestAdapter adapter;
+    private MechanicGarageAdapter adapter;
     private List<Garage> garageList;
     private FirebaseFirestore db;
+    private FirebaseAuth mAuth;
     private TextView emptyView;
     private ImageView btnBack;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_manage_demands);
+        setContentView(R.layout.activity_mechanic_manage_garages);
 
         db = FirebaseFirestore.getInstance();
+        mAuth = FirebaseAuth.getInstance();
         garageList = new ArrayList<>();
 
-        recyclerView = findViewById(R.id.recyclerViewDemands);
+        recyclerView = findViewById(R.id.recyclerViewGarages);
         emptyView = findViewById(R.id.emptyView);
         btnBack = findViewById(R.id.btnBack);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new GarageRequestAdapter(this, garageList);
+        adapter = new MechanicGarageAdapter(this, garageList);
         recyclerView.setAdapter(adapter);
 
         btnBack.setOnClickListener(v -> finish());
 
-        fetchPendingGarages();
+        fetchMyGarages();
     }
 
-    private void fetchPendingGarages() {
+    private void fetchMyGarages() {
+        String mechanicId = mAuth.getCurrentUser().getUid();
+
         db.collection("garages")
-                .whereEqualTo("enabled", false)
+                .whereEqualTo("mechanicId", mechanicId)
+                .whereEqualTo("enabled", true)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     garageList.clear();
@@ -66,17 +72,16 @@ public class ManageDemandsActivity extends AppCompatActivity {
                         emptyView.setVisibility(View.GONE);
                     } else {
                         emptyView.setVisibility(View.VISIBLE);
-                        emptyView.setText("No pending garage requests");
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Error fetching garage requests: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Error fetching garages: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        fetchPendingGarages();
+        fetchMyGarages();
     }
 }

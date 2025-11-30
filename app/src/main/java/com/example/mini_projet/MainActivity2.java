@@ -196,8 +196,11 @@ public class MainActivity2 extends AppCompatActivity {
                             if (role != null && role.trim().equalsIgnoreCase("admin")) {
                                 // Redirect to Admin Dashboard
                                 startActivity(new Intent(MainActivity2.this, AdminDashboardActivity.class));
+                            } else if (role != null && role.trim().equalsIgnoreCase("mechanic")) {
+                                // Redirect to Mechanic Dashboard
+                                startActivity(new Intent(MainActivity2.this, MechanicDashboardActivity.class));
                             } else {
-                                // Redirect to Home
+                                // Redirect to Client Home
                                 startActivity(new Intent(MainActivity2.this, home.class));
                             }
                             finish();
@@ -224,7 +227,7 @@ public class MainActivity2 extends AppCompatActivity {
                             Toast.LENGTH_SHORT).show();
                 });
     }
-
+ 
     private abstract class SimpleTextWatcher implements TextWatcher {
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {

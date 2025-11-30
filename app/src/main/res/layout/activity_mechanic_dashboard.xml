@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/primary"
-    tools:context=".AdminDashboardActivity">
+    tools:context=".MechanicDashboardActivity">
 
     <!-- Header -->
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -18,30 +18,47 @@
         app:layout_constraintEnd_toEndOf="parent">
 
         <TextView
-            android:id="@+id/dashboardTitle"
-            android:layout_width="wrap_content"
+            android:id="@+id/logoText"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="22dp"
             android:layout_marginTop="40dp"
             android:fontFamily="@font/aleo_extrabold"
-            android:text="Admin Dashboard"
+            android:text="AutoFix"
             android:textColor="@color/sec"
-            android:textSize="28sp"
+            android:textSize="25dp"
             android:textStyle="bold"
+            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <TextView
+            android:id="@+id/dashboardTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:layout_marginTop="12dp"
+            android:fontFamily="@font/aleo_extrabold"
+            android:text="Mechanic Dashboard"
+            android:textColor="@color/white"
+            android:textSize="37sp"
+            app:layout_constraintTop_toBottomOf="@id/logoText"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <TextView
             android:id="@+id/dashboardSubtitle"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="22dp"
             android:layout_marginTop="12dp"
             android:fontFamily="@font/aleo_extrabold"
-            android:text="Manage your application"
+            android:text="Manage your garage services"
             android:textColor="@color/white"
-            android:textSize="18sp"
-            app:layout_constraintStart_toStartOf="@id/dashboardTitle"
-            app:layout_constraintTop_toBottomOf="@id/dashboardTitle" />
+            android:textSize="15dp"
+            app:layout_constraintTop_toBottomOf="@id/dashboardTitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -50,7 +67,7 @@
         android:id="@+id/container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="50dp"
         android:background="@drawable/rounded_container"
         android:padding="24dp"
         app:layout_constraintTop_toBottomOf="@id/header"
@@ -60,18 +77,25 @@
 
         <androidx.core.widget.NestedScrollView
             android:id="@+id/scroll_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:fillViewport="true">
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:fillViewport="true"
+            android:focusableInTouchMode="true"
+            android:descendantFocusability="beforeDescendants"
+            android:scrollbars="vertical"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="600dp">
 
-                <!-- Manage Demands Card -->
+                <!-- Add Garage Card -->
                 <androidx.cardview.widget.CardView
-                    android:id="@+id/cardManageDemands"
+                    android:id="@+id/cardAddGarage"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
@@ -87,55 +111,38 @@
                         android:padding="24dp">
 
                         <ImageView
-                            android:id="@+id/iconDemands"
+                            android:id="@+id/iconAddGarage"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:background="@drawable/circle_bg_blue"
                             android:padding="10dp"
-                            android:src="@android:drawable/ic_dialog_email"
+                            android:src="@android:drawable/ic_input_add"
                             app:tint="@color/white"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent" />
 
                         <TextView
-                            android:id="@+id/textDemands"
+                            android:id="@+id/textAddGarage"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="16dp"
-                            android:text="Manage Demands"
+                            android:text="Add Garage"
                             android:textColor="@color/black"
                             android:textSize="18sp"
                             android:textStyle="bold"
-                            app:layout_constraintStart_toEndOf="@id/iconDemands"
-                            app:layout_constraintTop_toTopOf="@id/iconDemands" />
+                            app:layout_constraintStart_toEndOf="@id/iconAddGarage"
+                            app:layout_constraintTop_toTopOf="@id/iconAddGarage" />
 
                         <TextView
-                            android:id="@+id/textDemandsDesc"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="Review pending mechanic requests"
+                            android:text="Create a new garage request"
                             android:textColor="@color/gray"
                             android:textSize="14sp"
                             app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintStart_toStartOf="@id/textDemands"
-                            app:layout_constraintTop_toBottomOf="@id/textDemands" />
-
-                        <TextView
-                            android:id="@+id/pendingCount"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
-                            android:background="@drawable/badge_bg"
-                            android:paddingHorizontal="12dp"
-                            android:paddingVertical="4dp"
-                            android:text="0 Pending"
-                            android:textColor="@color/white"
-                            android:textSize="12sp"
-                            android:textStyle="bold"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@id/iconDemands" />
+                            app:layout_constraintStart_toStartOf="@id/textAddGarage"
+                            app:layout_constraintTop_toBottomOf="@id/textAddGarage" />
 
                         <ImageView
                             android:layout_width="24dp"
@@ -144,7 +151,8 @@
                             app:tint="@color/gray"
                             android:rotation="0"
                             app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent" />
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
                 </androidx.cardview.widget.CardView>
@@ -157,7 +165,7 @@
                     android:layout_marginTop="20dp"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="8dp"
-                    app:layout_constraintTop_toBottomOf="@id/cardManageDemands"
+                    app:layout_constraintTop_toBottomOf="@id/cardAddGarage"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent">
 
@@ -167,18 +175,18 @@
                         android:padding="24dp">
 
                         <ImageView
-                            android:id="@+id/iconGarages"
+                            android:id="@+id/iconManageGarages"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:background="@drawable/circle_bg_blue"
                             android:padding="10dp"
-                            android:src="@android:drawable/ic_menu_myplaces"
+                            android:src="@android:drawable/ic_menu_edit"
                             app:tint="@color/white"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent" />
 
                         <TextView
-                            android:id="@+id/textGarages"
+                            android:id="@+id/textManageGarages"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="16dp"
@@ -186,36 +194,19 @@
                             android:textColor="@color/black"
                             android:textSize="18sp"
                             android:textStyle="bold"
-                            app:layout_constraintStart_toEndOf="@id/iconGarages"
-                            app:layout_constraintTop_toTopOf="@id/iconGarages" />
+                            app:layout_constraintStart_toEndOf="@id/iconManageGarages"
+                            app:layout_constraintTop_toTopOf="@id/iconManageGarages" />
 
                         <TextView
-                            android:id="@+id/textGaragesDesc"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="Review pending garage requests"
+                            android:text="Edit or delete your approved garages"
                             android:textColor="@color/gray"
                             android:textSize="14sp"
                             app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintStart_toStartOf="@id/textGarages"
-                            app:layout_constraintTop_toBottomOf="@id/textGarages" />
-
-                        <TextView
-                            android:id="@+id/pendingGaragesCount"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
-                            android:background="@drawable/badge_bg"
-                            android:paddingHorizontal="12dp"
-                            android:paddingVertical="4dp"
-                            android:text="0 Pending"
-                            android:textColor="@color/white"
-                            android:textSize="12sp"
-                            android:textStyle="bold"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@id/iconGarages" />
+                            app:layout_constraintStart_toStartOf="@id/textManageGarages"
+                            app:layout_constraintTop_toBottomOf="@id/textManageGarages" />
 
                         <ImageView
                             android:layout_width="24dp"
@@ -224,7 +215,72 @@
                             app:tint="@color/gray"
                             android:rotation="0"
                             app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent" />
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- Demands Card -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardDemands"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="8dp"
+                    app:layout_constraintTop_toBottomOf="@id/cardManageGarages"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="24dp">
+
+                        <ImageView
+                            android:id="@+id/iconDemands"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:background="@drawable/circle_bg_blue"
+                            android:padding="10dp"
+                            android:src="@android:drawable/ic_menu_info_details"
+                            app:tint="@color/white"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <TextView
+                            android:id="@+id/textDemands"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:text="Demands"
+                            android:textColor="@color/black"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            app:layout_constraintStart_toEndOf="@id/iconDemands"
+                            app:layout_constraintTop_toTopOf="@id/iconDemands" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="View your service demands"
+                            android:textColor="@color/gray"
+                            android:textSize="14sp"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="@id/textDemands"
+                            app:layout_constraintTop_toBottomOf="@id/textDemands" />
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@android:drawable/ic_media_play"
+                            app:tint="@color/gray"
+                            android:rotation="0"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
                 </androidx.cardview.widget.CardView>
@@ -234,7 +290,7 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Logout Button - Bottom Right -->
+    <!-- Logout Button - Bottom Right (like admin dashboard) -->
     <ImageView
         android:id="@+id/logoutButton"
         android:layout_width="56dp"
