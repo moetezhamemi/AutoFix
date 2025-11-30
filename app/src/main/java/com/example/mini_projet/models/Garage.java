@@ -2,7 +2,7 @@ package com.example.mini_projet.models;
 
 import com.google.firebase.firestore.GeoPoint;
 
-public class Garage {
+public class  Garage {
     private String id;
     private String name;
     private String description;
