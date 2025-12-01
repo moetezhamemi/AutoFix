@@ -114,7 +114,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="Review pending mechanic requests"
+                            android:text="Review pending garage requests"
                             android:textColor="@color/gray"
                             android:textSize="14sp"
                             app:layout_constraintEnd_toEndOf="parent"
@@ -189,17 +189,7 @@
                             app:layout_constraintStart_toEndOf="@id/iconGarages"
                             app:layout_constraintTop_toTopOf="@id/iconGarages" />
 
-                        <TextView
-                            android:id="@+id/textGaragesDesc"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Review pending garage requests"
-                            android:textColor="@color/gray"
-                            android:textSize="14sp"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintStart_toStartOf="@id/textGarages"
-                            app:layout_constraintTop_toBottomOf="@id/textGarages" />
+
 
                         <TextView
                             android:id="@+id/pendingGaragesCount"
