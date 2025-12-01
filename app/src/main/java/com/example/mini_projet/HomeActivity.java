@@ -52,7 +52,7 @@ import java.util.Map;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class home extends AppCompatActivity implements OnMapReadyCallback {
+public class HomeActivity extends AppCompatActivity implements OnMapReadyCallback {
     private GoogleMap mMap;
     private EditText searchBar;
     private CircleImageView profileIcon;
@@ -92,12 +92,12 @@ public class home extends AppCompatActivity implements OnMapReadyCallback {
         loadUserProfile();
 
         profileIcon.setOnClickListener(v -> {
-            Intent intent = new Intent(home.this, profile.class);
+            Intent intent = new Intent(HomeActivity.this, profile.class);
             startActivity(intent);
         });
 
         chatListIcon.setOnClickListener(v -> {
-            Intent intent = new Intent(home.this, ChatListActivity.class);
+            Intent intent = new Intent(HomeActivity.this, ChatListActivity.class);
             startActivity(intent);
         });
     }
@@ -163,7 +163,8 @@ public class home extends AppCompatActivity implements OnMapReadyCallback {
                                     markerOptions.icon(BitmapDescriptorFactory.fromBitmap(customIcon));
                                 } else {
                                     // Fallback if custom icon fails
-                                    markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
+                                    markerOptions.icon(
+                                            BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
                                 }
 
                                 Marker marker = mMap.addMarker(markerOptions);
@@ -176,7 +177,7 @@ public class home extends AppCompatActivity implements OnMapReadyCallback {
                         mMap.setOnMarkerClickListener(marker -> {
                             String garageId = (String) marker.getTag();
                             if (garageId != null) {
-                                Intent intent = new Intent(home.this, GarageDetailActivity.class);
+                                Intent intent = new Intent(HomeActivity.this, GarageDetailActivity.class);
                                 intent.putExtra("garageId", garageId);
                                 startActivity(intent);
                                 return true; // Consume the event
@@ -226,7 +227,7 @@ public class home extends AppCompatActivity implements OnMapReadyCallback {
             // Draw the text at the top, centered
             // y is baseline, so we add -ascent to padding
             float textX = width / 2f;
-            float textY = padding - fontMetrics.ascent; 
+            float textY = padding - fontMetrics.ascent;
             canvas.drawText(text, textX, textY, paint);
 
             // Draw the icon below the text, centered
@@ -383,7 +384,8 @@ public class home extends AppCompatActivity implements OnMapReadyCallback {
     }
 
     private void displaySharedLocation(double latitude, double longitude) {
-        if (mMap == null) return;
+        if (mMap == null)
+            return;
 
         LatLng sharedPoint = new LatLng(latitude, longitude);
 

@@ -310,7 +310,7 @@ public class MainActivity2 extends AppCompatActivity {
                                 startActivity(new Intent(MainActivity2.this, MechanicDashboardActivity.class));
                             } else {
                                 // Redirect to Client Home
-                                startActivity(new Intent(MainActivity2.this, home.class));
+                                startActivity(new Intent(MainActivity2.this, HomeActivity.class));
                             }
                             finish();
                         } else {

@@ -11,7 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mini_projet.R;
-import com.example.mini_projet.home;
+import com.example.mini_projet.HomeActivity;
 import com.example.mini_projet.models.Message;
 
 import java.util.List;
@@ -52,11 +52,11 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHold
     @Override
     public void onBindViewHolder(@NonNull MessageAdapter.ViewHolder holder, int position) {
         Message chat = mChat.get(position);
-        
+
         if ("location".equals(chat.getType())) {
             holder.show_message.setText("Location shared");
             holder.itemView.setOnClickListener(v -> {
-                Intent intent = new Intent(mContext, home.class);
+                Intent intent = new Intent(mContext, HomeActivity.class);
                 intent.putExtra("sharedLatitude", chat.getLatitude());
                 intent.putExtra("sharedLongitude", chat.getLongitude());
                 mContext.startActivity(intent);
