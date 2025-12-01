@@ -71,7 +71,15 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 .whereEqualTo("enabled", false)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    int count = queryDocumentSnapshots.size();
+                    // Filter out REJECTED garages to match ManageDemandsActivity logic
+                    int count = 0;
+                    for (com.google.firebase.firestore.DocumentSnapshot document : queryDocumentSnapshots) {
+                        String status = document.getString("status");
+                        if (!"REJECTED".equals(status)) {
+                            count++;
+                        }
+                    }
+
                     if (count > 0) {
                         pendingCount.setText(count + " Requests");
                         pendingCount.setVisibility(View.VISIBLE);

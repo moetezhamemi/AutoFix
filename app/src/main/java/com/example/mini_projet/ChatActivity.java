@@ -80,35 +80,84 @@ public class ChatActivity extends AppCompatActivity {
         chatId = getIntent().getStringExtra("chatId");
         garageId = getIntent().getStringExtra("garageId");
 
-        // Set title based on garage or user
-        if (garageId != null) {
-            db.collection("garages").document(garageId).get().addOnSuccessListener(doc -> {
-                if (doc.exists()) {
-                    String garageName = doc.getString("name");
-                    String phone = doc.getString("phone");
-                    chatTitle.setText(garageName != null ? garageName : "Garage");
+        // Determine who to call based on current user's role
+        db.collection("users").document(fuser.getUid()).get().addOnSuccessListener(currentUserDoc -> {
+            User currentUser = currentUserDoc.toObject(User.class);
+            String currentUserRole = (currentUser != null && currentUser.getRole() != null)
+                    ? currentUser.getRole()
+                    : "";
 
-                    if (phone != null && !phone.isEmpty()) {
+            if (garageId != null) {
+                // Fetch garage info
+                db.collection("garages").document(garageId).get().addOnSuccessListener(doc -> {
+                    if (doc.exists()) {
+                        String garageName = doc.getString("name");
+                        String garagePhone = doc.getString("phone");
+
+                        // Determine title and phone based on role
+                        if ("mechanic".equalsIgnoreCase(currentUserRole)) {
+                            // Mechanic sees client name and calls the client
+                            db.collection("users").document(otherUserId).get().addOnSuccessListener(userDoc -> {
+                                User otherUser = userDoc.toObject(User.class);
+
+                                // Set title to client name
+                                if (otherUser != null && otherUser.getName() != null) {
+                                    chatTitle.setText(otherUser.getName());
+                                } else {
+                                    chatTitle.setText("Client");
+                                }
+
+                                // Set call button to client phone
+                                if (otherUser != null && otherUser.getPhone() != null
+                                        && !otherUser.getPhone().isEmpty()) {
+                                    btnCall.setVisibility(View.VISIBLE);
+                                    btnCall.setOnClickListener(v -> {
+                                        android.content.Intent intent = new android.content.Intent(
+                                                android.content.Intent.ACTION_DIAL);
+                                        intent.setData(android.net.Uri.parse("tel:" + otherUser.getPhone()));
+                                        startActivity(intent);
+                                    });
+                                }
+                            });
+                        } else {
+                            // Client sees garage name and calls the garage
+                            chatTitle.setText(garageName != null ? garageName : "Garage");
+
+                            if (garagePhone != null && !garagePhone.isEmpty()) {
+                                btnCall.setVisibility(View.VISIBLE);
+                                btnCall.setOnClickListener(v -> {
+                                    android.content.Intent intent = new android.content.Intent(
+                                            android.content.Intent.ACTION_DIAL);
+                                    intent.setData(android.net.Uri.parse("tel:" + garagePhone));
+                                    startActivity(intent);
+                                });
+                            }
+                        }
+                    }
+                });
+            } else {
+                // Direct user-to-user chat (no garage context)
+                db.collection("users").document(otherUserId).get().addOnSuccessListener(doc -> {
+                    User user = doc.toObject(User.class);
+                    if (user != null && user.getName() != null) {
+                        chatTitle.setText(user.getName());
+                    } else {
+                        chatTitle.setText("User");
+                    }
+
+                    // Show call button if other user has phone
+                    if (user != null && user.getPhone() != null && !user.getPhone().isEmpty()) {
                         btnCall.setVisibility(View.VISIBLE);
                         btnCall.setOnClickListener(v -> {
                             android.content.Intent intent = new android.content.Intent(
                                     android.content.Intent.ACTION_DIAL);
-                            intent.setData(android.net.Uri.parse("tel:" + phone));
+                            intent.setData(android.net.Uri.parse("tel:" + user.getPhone()));
                             startActivity(intent);
                         });
                     }
-                }
-            });
-        } else {
-            db.collection("users").document(otherUserId).get().addOnSuccessListener(doc -> {
-                User user = doc.toObject(User.class);
-                if (user != null && user.getName() != null) {
-                    chatTitle.setText(user.getName());
-                } else {
-                    chatTitle.setText("User");
-                }
-            });
-        }
+                });
+            }
+        });
 
         if (chatId != null) {
             readMessages(chatId);

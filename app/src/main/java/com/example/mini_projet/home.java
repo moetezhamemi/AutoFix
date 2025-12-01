@@ -3,30 +3,37 @@ package com.example.mini_projet;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
 import android.view.KeyEvent;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.view.inputmethod.EditorInfo;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import de.hdodenhof.circleimageview.CircleImageView;
+import com.example.mini_projet.models.Garage;
 import com.example.mini_projet.models.User;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.squareup.picasso.Picasso;
-
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.tasks.CancellationTokenSource;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.squareup.picasso.Picasso;
 
 import org.osmdroid.config.Configuration;
 import org.osmdroid.events.MapEventsReceiver;
@@ -37,10 +44,13 @@ import org.osmdroid.views.overlay.MapEventsOverlay;
 import org.osmdroid.views.overlay.Marker;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 public class home extends AppCompatActivity {
     private MapView map;
@@ -53,6 +63,8 @@ public class home extends AppCompatActivity {
     private FirebaseAuth auth;
     private FirebaseFirestore db;
     private FusedLocationProviderClient fusedLocationClient;
+
+    private final List<Marker> garageMarkers = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,15 +131,22 @@ public class home extends AppCompatActivity {
     }
 
     private void initCityList() {
-        // Fetch approved garages from Firestore
+        // Fetch approved garages from Firestore with real-time updates
         db.collection("garages")
                 .whereEqualTo("enabled", true)
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    if (!queryDocumentSnapshots.isEmpty()) {
-                        for (com.google.firebase.firestore.DocumentSnapshot document : queryDocumentSnapshots) {
-                            com.example.mini_projet.models.Garage garage = document
-                                    .toObject(com.example.mini_projet.models.Garage.class);
+                .addSnapshotListener((value, error) -> {
+                    if (error != null) {
+                        Toast.makeText(this, "Error loading garages: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    if (value != null) {
+                        // Remove old garage markers
+                        map.getOverlays().removeAll(garageMarkers);
+                        garageMarkers.clear();
+
+                        for (DocumentSnapshot document : value.getDocuments()) {
+                            Garage garage = document.toObject(Garage.class);
                             if (garage != null && garage.getAddress() != null) {
                                 // Convert Firestore GeoPoint to OSMDroid GeoPoint
                                 GeoPoint geoPoint = new GeoPoint(
@@ -140,9 +159,19 @@ public class home extends AppCompatActivity {
                                 // Create marker for the garage
                                 Marker marker = new Marker(map);
                                 marker.setPosition(geoPoint);
-                                marker.setTitle(garage.getName() + " ⭐ " + String.format("%.1f", garage.getRating()));
-                                marker.setSnippet("Phone: " + garage.getPhone() + "\n" + garage.getDescription());
-                                marker.setIcon(getResources().getDrawable(R.drawable.ic_garage_marker));
+                                marker.setTitle(garage.getName());
+                                marker.setSnippet("Rating: " + String.format("%.1f", garage.getRating()) + " ⭐\n" +
+                                        "Phone: " + garage.getPhone() + "\n" + garage.getDescription());
+
+                                // Custom icon with rating text
+                                Drawable defaultIcon = getResources().getDrawable(R.drawable.ic_garage_marker);
+                                Bitmap customIcon = drawTextToBitmap(defaultIcon,
+                                        String.format("⭐%.1f", garage.getRating()));
+                                if (customIcon != null) {
+                                    marker.setIcon(new BitmapDrawable(getResources(), customIcon));
+                                } else {
+                                    marker.setIcon(defaultIcon);
+                                }
 
                                 // Set click listener to open garage details
                                 marker.setOnMarkerClickListener((m, mapView) -> {
@@ -153,14 +182,56 @@ public class home extends AppCompatActivity {
                                 });
 
                                 map.getOverlays().add(marker);
+                                garageMarkers.add(marker);
                             }
                         }
                         map.invalidate(); // Refresh the map
                     }
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Error loading garages: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
+    }
+
+    private Bitmap drawTextToBitmap(Drawable drawable, String text) {
+        try {
+            Bitmap bitmap;
+            if (drawable instanceof BitmapDrawable) {
+                bitmap = ((BitmapDrawable) drawable).getBitmap();
+            } else {
+                bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(),
+                        Bitmap.Config.ARGB_8888);
+                Canvas canvas = new Canvas(bitmap);
+                drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+                drawable.draw(canvas);
+            }
+
+            Bitmap mutableBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+
+            // Create a larger bitmap to hold both icon and text
+            Paint paint = new Paint();
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(Color.BLACK); // Text color
+            paint.setTextSize(40); // Text size
+            paint.setFakeBoldText(true);
+            paint.setShadowLayer(5f, 0f, 0f, Color.WHITE); // White shadow for better visibility
+
+            // Calculate text size
+            float textWidth = paint.measureText(text);
+            int width = mutableBitmap.getWidth() + (int) textWidth + 20; // Add padding
+            int height = Math.max(mutableBitmap.getHeight(), 60); // Ensure enough height
+
+            Bitmap finalBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(finalBitmap);
+
+            // Draw the icon
+            canvas.drawBitmap(mutableBitmap, 0, (height - mutableBitmap.getHeight()) / 2f, null);
+
+            // Draw the text
+            canvas.drawText(text, mutableBitmap.getWidth() + 10, (height + 30) / 2f, paint);
+
+            return finalBitmap;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     private void requestLocationPermission() {
@@ -329,23 +400,23 @@ public class home extends AppCompatActivity {
 
     private void displaySharedLocation(double latitude, double longitude) {
         GeoPoint sharedPoint = new GeoPoint(latitude, longitude);
-        
+
         // Create red marker for shared location
         Marker sharedMarker = new Marker(map);
         sharedMarker.setPosition(sharedPoint);
         sharedMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
         sharedMarker.setTitle("Client Location");
-        
+
         // Set red color for the marker
         sharedMarker.setIcon(getResources().getDrawable(android.R.drawable.ic_dialog_map));
         sharedMarker.setTextIcon("📍"); // Red pin emoji
-        
+
         map.getOverlays().add(sharedMarker);
-        
+
         // Zoom to shared location
         map.getController().setZoom(15.0);
         map.getController().setCenter(sharedPoint);
-        
+
         Toast.makeText(this, "Client location displayed", Toast.LENGTH_SHORT).show();
     }
 }
