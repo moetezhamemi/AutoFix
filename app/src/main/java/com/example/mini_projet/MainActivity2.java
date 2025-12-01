@@ -25,17 +25,23 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 public class MainActivity2 extends AppCompatActivity {
 
+    // Google Sign-In
+    private Button btnGoogleSignIn;
+    private com.google.android.gms.auth.api.signin.GoogleSignInClient mGoogleSignInClient;
+    private static final int RC_SIGN_IN = 9001;
+    private String selectedRole = "client"; // Default, but will be set by dialog
+
+    // Firebase
+    private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
+
     // UI
     private EditText etEmail, etPassword;
     private TextView tvEmailError, tvPasswordError;
     private Button btnLogin;
     private TextView createAccount;
-    private NestedScrollView scrollView;
     private ConstraintLayout container;
-
-    // Firebase
-    private FirebaseAuth mAuth;
-    private FirebaseFirestore db;
+    private NestedScrollView scrollView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +53,14 @@ public class MainActivity2 extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
+        // Configure Google Sign-In
+        com.google.android.gms.auth.api.signin.GoogleSignInOptions gso = new com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(
+                com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+        mGoogleSignInClient = com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(this, gso);
+
         // ---- Bind views ----------------------------------------------------
         container = findViewById(R.id.container);
         scrollView = findViewById(R.id.scroll_view);
@@ -57,6 +71,7 @@ public class MainActivity2 extends AppCompatActivity {
         tvPasswordError = findViewById(R.id.password_error);
         btnLogin = findViewById(R.id.loginButton);
         createAccount = findViewById(R.id.textView10);
+        btnGoogleSignIn = findViewById(R.id.googleSignInButton);
 
         container.getViewTreeObserver().addOnGlobalLayoutListener(
                 new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -118,6 +133,9 @@ public class MainActivity2 extends AppCompatActivity {
             }
         });
 
+        // Google Sign-In Button
+        btnGoogleSignIn.setOnClickListener(v -> showRoleSelectionDialog());
+
         // ---- Navigate to Sign-up ------------------------------------------
         createAccount.setOnClickListener(v -> {
             // Show dialog to choose user type
@@ -137,6 +155,97 @@ public class MainActivity2 extends AppCompatActivity {
                     .setNeutralButton("Cancel", null)
                     .show();
         });
+    }
+
+    private void showRoleSelectionDialog() {
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("Complete your profile")
+                .setMessage("Are you a Client or a Mechanic?")
+                .setPositiveButton("Client", (dialog, which) -> {
+                    selectedRole = "client";
+                    signInWithGoogle();
+                })
+                .setNegativeButton("Mechanic", (dialog, which) -> {
+                    selectedRole = "mechanic";
+                    signInWithGoogle();
+                })
+                .setNeutralButton("Cancel", null)
+                .show();
+    }
+
+    private void signInWithGoogle() {
+        // Sign out first to force account picker to show
+        mGoogleSignInClient.signOut().addOnCompleteListener(this, task -> {
+            Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+            startActivityForResult(signInIntent, RC_SIGN_IN);
+        });
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == RC_SIGN_IN) {
+            com.google.android.gms.tasks.Task<com.google.android.gms.auth.api.signin.GoogleSignInAccount> task = com.google.android.gms.auth.api.signin.GoogleSignIn
+                    .getSignedInAccountFromIntent(data);
+            try {
+                com.google.android.gms.auth.api.signin.GoogleSignInAccount account = task
+                        .getResult(com.google.android.gms.common.api.ApiException.class);
+                firebaseAuthWithGoogle(account.getIdToken());
+            } catch (com.google.android.gms.common.api.ApiException e) {
+                Toast.makeText(this, "Google sign-in failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void firebaseAuthWithGoogle(String idToken) {
+        com.google.firebase.auth.AuthCredential credential = com.google.firebase.auth.GoogleAuthProvider
+                .getCredential(idToken, null);
+        mAuth.signInWithCredential(credential)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+                        if (firebaseUser != null) {
+                            String userId = firebaseUser.getUid();
+                            String email = firebaseUser.getEmail();
+                            String name = firebaseUser.getDisplayName();
+                            String photoUrl = firebaseUser.getPhotoUrl() != null ? firebaseUser.getPhotoUrl().toString()
+                                    : "";
+
+                            // Check if user already exists
+                            db.collection("users").document(userId).get()
+                                    .addOnSuccessListener(documentSnapshot -> {
+                                        if (documentSnapshot.exists()) {
+                                            // User exists, ignore selectedRole and use existing role
+                                            checkUserEnabled(userId);
+                                        } else {
+                                            // New user, create with selectedRole
+                                            com.example.mini_projet.models.User newUser = new com.example.mini_projet.models.User(
+                                                    userId, name, email,
+                                                    new com.google.firebase.firestore.GeoPoint(0, 0), photoUrl, "",
+                                                    selectedRole);
+                                            db.collection("users").document(userId).set(newUser)
+                                                    .addOnSuccessListener(aVoid -> {
+                                                        Toast.makeText(MainActivity2.this,
+                                                                "Account created successfully!", Toast.LENGTH_SHORT)
+                                                                .show();
+                                                        checkUserEnabled(userId);
+                                                    })
+                                                    .addOnFailureListener(e -> {
+                                                        Toast.makeText(MainActivity2.this, "Error saving user data",
+                                                                Toast.LENGTH_SHORT).show();
+                                                    });
+                                        }
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Toast.makeText(MainActivity2.this, "Error checking user", Toast.LENGTH_SHORT)
+                                                .show();
+                                    });
+                        }
+                    } else {
+                        Toast.makeText(MainActivity2.this, "Authentication failed", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private boolean validateEmail() {
@@ -191,7 +300,7 @@ public class MainActivity2 extends AppCompatActivity {
                             // User is enabled
                             String role = documentSnapshot.getString("role");
                             // Debug: Show role
-                            Toast.makeText(MainActivity2.this, "Role: " + role, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity2.this, "Welcome " + role, Toast.LENGTH_SHORT).show();
 
                             if (role != null && role.trim().equalsIgnoreCase("admin")) {
                                 // Redirect to Admin Dashboard
@@ -227,7 +336,7 @@ public class MainActivity2 extends AppCompatActivity {
                             Toast.LENGTH_SHORT).show();
                 });
     }
- 
+
     private abstract class SimpleTextWatcher implements TextWatcher {
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
