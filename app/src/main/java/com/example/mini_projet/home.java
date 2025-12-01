@@ -172,13 +172,16 @@ public class home extends AppCompatActivity implements OnMapReadyCallback {
                             }
                         }
 
-                        mMap.setOnInfoWindowClickListener(marker -> {
+                        // Set click listener to open garage details immediately when marker is clicked
+                        mMap.setOnMarkerClickListener(marker -> {
                             String garageId = (String) marker.getTag();
                             if (garageId != null) {
                                 Intent intent = new Intent(home.this, GarageDetailActivity.class);
                                 intent.putExtra("garageId", garageId);
                                 startActivity(intent);
+                                return true; // Consume the event
                             }
+                            return false; // Let default behavior happen (e.g. for other markers)
                         });
                     }
                 });
@@ -199,27 +202,37 @@ public class home extends AppCompatActivity implements OnMapReadyCallback {
 
             Bitmap mutableBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
 
-            // Create a larger bitmap to hold both icon and text
+            // Create paint for text
             Paint paint = new Paint();
             paint.setStyle(Paint.Style.FILL);
             paint.setColor(Color.BLACK); // Text color
             paint.setTextSize(40); // Text size
             paint.setFakeBoldText(true);
             paint.setShadowLayer(5f, 0f, 0f, Color.WHITE); // White shadow for better visibility
+            paint.setTextAlign(Paint.Align.CENTER); // Center text
 
-            // Calculate text size
+            // Calculate dimensions
             float textWidth = paint.measureText(text);
-            int width = mutableBitmap.getWidth() + (int) textWidth + 20; // Add padding
-            int height = Math.max(mutableBitmap.getHeight(), 60); // Ensure enough height
+            Paint.FontMetrics fontMetrics = paint.getFontMetrics();
+            float textHeight = fontMetrics.descent - fontMetrics.ascent;
+            int padding = 10;
+
+            int width = Math.max(mutableBitmap.getWidth(), (int) textWidth + 20);
+            int height = mutableBitmap.getHeight() + (int) textHeight + padding + 10;
 
             Bitmap finalBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(finalBitmap);
 
-            // Draw the icon
-            canvas.drawBitmap(mutableBitmap, 0, (height - mutableBitmap.getHeight()) / 2f, null);
+            // Draw the text at the top, centered
+            // y is baseline, so we add -ascent to padding
+            float textX = width / 2f;
+            float textY = padding - fontMetrics.ascent; 
+            canvas.drawText(text, textX, textY, paint);
 
-            // Draw the text
-            canvas.drawText(text, mutableBitmap.getWidth() + 10, (height + 30) / 2f, paint);
+            // Draw the icon below the text, centered
+            float iconX = (width - mutableBitmap.getWidth()) / 2f;
+            float iconY = textHeight + padding + 5;
+            canvas.drawBitmap(mutableBitmap, iconX, iconY, null);
 
             return finalBitmap;
         } catch (Exception e) {
