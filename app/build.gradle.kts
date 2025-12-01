@@ -54,9 +54,7 @@ dependencies {
     // Profile image circle
     implementation("de.hdodenhof:circleimageview:3.1.0")
 
-    // OSM maps
-    implementation("org.osmdroid:osmdroid-android:6.1.18")
-    implementation("org.osmdroid:osmdroid-wms:6.1.18")
+
 
     implementation("com.google.firebase:firebase-auth:22.3.2")
     // 🔥 Firebase BOM

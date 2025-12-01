@@ -29,19 +29,19 @@ import com.example.mini_projet.models.User;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.squareup.picasso.Picasso;
-
-import org.osmdroid.config.Configuration;
-import org.osmdroid.events.MapEventsReceiver;
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
-import org.osmdroid.util.GeoPoint;
-import org.osmdroid.views.MapView;
-import org.osmdroid.views.overlay.MapEventsOverlay;
-import org.osmdroid.views.overlay.Marker;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -52,12 +52,12 @@ import java.util.Map;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class home extends AppCompatActivity {
-    private MapView map;
+public class home extends AppCompatActivity implements OnMapReadyCallback {
+    private GoogleMap mMap;
     private EditText searchBar;
     private CircleImageView profileIcon;
     private TextView locationText;
-    private final Map<String, GeoPoint> cityMap = new HashMap<>();
+    private final Map<String, LatLng> cityMap = new HashMap<>();
     private static final int LOCATION_REQUEST = 1;
 
     private FirebaseAuth auth;
@@ -69,14 +69,15 @@ public class home extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // OSMDroid cache folder
-        Configuration.getInstance().load(getApplicationContext(),
-                getPreferences(MODE_PRIVATE));
-
         setContentView(R.layout.activity_home);
 
-        map = findViewById(R.id.map);
+        // Map initialization
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        if (mapFragment != null) {
+            mapFragment.getMapAsync(this);
+        }
+
         searchBar = findViewById(R.id.search_bar);
         profileIcon = findViewById(R.id.profile_icon);
         ImageView chatListIcon = findViewById(R.id.chat_list_icon);
@@ -86,19 +87,9 @@ public class home extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        initMap();
-        initCityList();
         requestLocationPermission();
         setupSearch();
         loadUserProfile();
-        getUserLocation();
-
-        // Check if location was shared from chat
-        if (getIntent().hasExtra("sharedLatitude") && getIntent().hasExtra("sharedLongitude")) {
-            double sharedLat = getIntent().getDoubleExtra("sharedLatitude", 0);
-            double sharedLng = getIntent().getDoubleExtra("sharedLongitude", 0);
-            displaySharedLocation(sharedLat, sharedLng);
-        }
 
         profileIcon.setOnClickListener(v -> {
             Intent intent = new Intent(home.this, profile.class);
@@ -111,23 +102,24 @@ public class home extends AppCompatActivity {
         });
     }
 
-    private void initMap() {
-        map.setTileSource(TileSourceFactory.MAPNIK);
-        map.setMultiTouchControls(true);
-        map.getController().setZoom(6.5);
-        map.getController().setCenter(new GeoPoint(34.0, 9.0));
+    @Override
+    public void onMapReady(@NonNull GoogleMap googleMap) {
+        mMap = googleMap;
+        mMap.getUiSettings().setZoomControlsEnabled(true);
 
-        map.getOverlays().add(new MapEventsOverlay(new MapEventsReceiver() {
-            @Override
-            public boolean singleTapConfirmedHelper(GeoPoint p) {
-                return false;
-            }
+        // Default location (Tunisia)
+        LatLng tunisia = new LatLng(34.0, 9.0);
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(tunisia, 6.5f));
 
-            @Override
-            public boolean longPressHelper(GeoPoint p) {
-                return false;
-            }
-        }));
+        initCityList();
+        getUserLocation();
+
+        // Check if location was shared from chat
+        if (getIntent().hasExtra("sharedLatitude") && getIntent().hasExtra("sharedLongitude")) {
+            double sharedLat = getIntent().getDoubleExtra("sharedLatitude", 0);
+            double sharedLng = getIntent().getDoubleExtra("sharedLongitude", 0);
+            displaySharedLocation(sharedLat, sharedLng);
+        }
     }
 
     private void initCityList() {
@@ -140,52 +132,54 @@ public class home extends AppCompatActivity {
                         return;
                     }
 
-                    if (value != null) {
+                    if (value != null && mMap != null) {
                         // Remove old garage markers
-                        map.getOverlays().removeAll(garageMarkers);
+                        for (Marker marker : garageMarkers) {
+                            marker.remove();
+                        }
                         garageMarkers.clear();
 
                         for (DocumentSnapshot document : value.getDocuments()) {
                             Garage garage = document.toObject(Garage.class);
                             if (garage != null && garage.getAddress() != null) {
-                                // Convert Firestore GeoPoint to OSMDroid GeoPoint
-                                GeoPoint geoPoint = new GeoPoint(
+                                LatLng position = new LatLng(
                                         garage.getAddress().getLatitude(),
                                         garage.getAddress().getLongitude());
 
-                                // Add to cityMap for search functionality
-                                cityMap.put(garage.getName().toLowerCase(), geoPoint);
-
-                                // Create marker for the garage
-                                Marker marker = new Marker(map);
-                                marker.setPosition(geoPoint);
-                                marker.setTitle(garage.getName());
-                                marker.setSnippet("Rating: " + String.format("%.1f", garage.getRating()) + " ⭐\n" +
-                                        "Phone: " + garage.getPhone() + "\n" + garage.getDescription());
+                                cityMap.put(garage.getName().toLowerCase(), position);
 
                                 // Custom icon with rating text
                                 Drawable defaultIcon = getResources().getDrawable(R.drawable.ic_garage_marker);
                                 Bitmap customIcon = drawTextToBitmap(defaultIcon,
                                         String.format("⭐%.1f", garage.getRating()));
+
+                                MarkerOptions markerOptions = new MarkerOptions()
+                                        .position(position)
+                                        .title(garage.getName())
+                                        .snippet("Rating: " + String.format("%.1f", garage.getRating()) + " ⭐\n" +
+                                                "Phone: " + garage.getPhone());
+
                                 if (customIcon != null) {
-                                    marker.setIcon(new BitmapDrawable(getResources(), customIcon));
+                                    markerOptions.icon(BitmapDescriptorFactory.fromBitmap(customIcon));
                                 } else {
-                                    marker.setIcon(defaultIcon);
+                                    // Fallback if custom icon fails
+                                    markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
                                 }
 
-                                // Set click listener to open garage details
-                                marker.setOnMarkerClickListener((m, mapView) -> {
-                                    Intent intent = new Intent(home.this, GarageDetailActivity.class);
-                                    intent.putExtra("garageId", garage.getId());
-                                    startActivity(intent);
-                                    return true;
-                                });
-
-                                map.getOverlays().add(marker);
+                                Marker marker = mMap.addMarker(markerOptions);
+                                marker.setTag(garage.getId()); // Store ID in tag
                                 garageMarkers.add(marker);
                             }
                         }
-                        map.invalidate(); // Refresh the map
+
+                        mMap.setOnInfoWindowClickListener(marker -> {
+                            String garageId = (String) marker.getTag();
+                            if (garageId != null) {
+                                Intent intent = new Intent(home.this, GarageDetailActivity.class);
+                                intent.putExtra("garageId", garageId);
+                                startActivity(intent);
+                            }
+                        });
                     }
                 });
     }
@@ -261,6 +255,10 @@ public class home extends AppCompatActivity {
             return;
         }
 
+        if (mMap != null) {
+            mMap.setMyLocationEnabled(true);
+        }
+
         try {
             fusedLocationClient
                     .getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, new CancellationTokenSource().getToken())
@@ -287,20 +285,11 @@ public class home extends AppCompatActivity {
                                     }
 
                                     // Centrer la carte sur la position actuelle
-                                    GeoPoint userLocation = new GeoPoint(location.getLatitude(),
+                                    LatLng userLocation = new LatLng(location.getLatitude(),
                                             location.getLongitude());
-                                    map.getController().setCenter(userLocation);
-                                    map.getController().setZoom(12.0);
-
-                                    // Add green marker for user's current position
-                                    Marker userMarker = new Marker(map);
-                                    userMarker.setPosition(userLocation);
-                                    userMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-                                    userMarker.setTitle("Your Location");
-                                    userMarker.setSnippet("You are here");
-                                    userMarker.setIcon(getResources().getDrawable(R.drawable.ic_user_location_marker));
-                                    map.getOverlays().add(userMarker);
-                                    map.invalidate();
+                                    if (mMap != null) {
+                                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 12.0f));
+                                    }
                                 }
                             } catch (IOException e) {
                                 e.printStackTrace();
@@ -329,7 +318,7 @@ public class home extends AppCompatActivity {
     }
 
     private void performSearch(String query) {
-        GeoPoint gp = cityMap.get(query);
+        LatLng gp = cityMap.get(query);
         if (gp != null) {
             zoomTo(gp, query);
             return;
@@ -340,7 +329,7 @@ public class home extends AppCompatActivity {
             List<Address> addresses = gc.getFromLocationName(query + ", Tunisia", 1);
             if (!addresses.isEmpty()) {
                 Address a = addresses.get(0);
-                gp = new GeoPoint(a.getLatitude(), a.getLongitude());
+                gp = new LatLng(a.getLatitude(), a.getLongitude());
                 zoomTo(gp, query);
                 return;
             }
@@ -350,16 +339,10 @@ public class home extends AppCompatActivity {
         Toast.makeText(this, "Not found – try \"Tunis\" or \"Sousse\"", Toast.LENGTH_SHORT).show();
     }
 
-    private void zoomTo(GeoPoint point, String title) {
-        map.getController().animateTo(point);
-        map.getController().setZoom(12.0);
-
-        Marker marker = new Marker(map);
-        marker.setPosition(point);
-        marker.setTitle(title.substring(0, 1).toUpperCase() + title.substring(1));
-        marker.setIcon(getResources().getDrawable(android.R.drawable.star_big_on));
-        map.getOverlays().add(marker);
-        map.invalidate();
+    private void zoomTo(LatLng point, String title) {
+        if (mMap != null) {
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(point, 12.0f));
+        }
     }
 
     private void loadUserProfile() {
@@ -386,36 +369,19 @@ public class home extends AppCompatActivity {
                 });
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        map.onResume();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        map.onPause();
-    }
-
     private void displaySharedLocation(double latitude, double longitude) {
-        GeoPoint sharedPoint = new GeoPoint(latitude, longitude);
+        if (mMap == null) return;
+
+        LatLng sharedPoint = new LatLng(latitude, longitude);
 
         // Create red marker for shared location
-        Marker sharedMarker = new Marker(map);
-        sharedMarker.setPosition(sharedPoint);
-        sharedMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-        sharedMarker.setTitle("Client Location");
-
-        // Set red color for the marker
-        sharedMarker.setIcon(getResources().getDrawable(android.R.drawable.ic_dialog_map));
-        sharedMarker.setTextIcon("📍"); // Red pin emoji
-
-        map.getOverlays().add(sharedMarker);
+        mMap.addMarker(new MarkerOptions()
+                .position(sharedPoint)
+                .title("Client Location")
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
 
         // Zoom to shared location
-        map.getController().setZoom(15.0);
-        map.getController().setCenter(sharedPoint);
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(sharedPoint, 15.0f));
 
         Toast.makeText(this, "Client location displayed", Toast.LENGTH_SHORT).show();
     }
